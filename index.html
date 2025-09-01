@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>三能國際 線上訂購</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --primary: #007bff; --primary-hover: #0056b3; --bg: #f9fafb; --card-bg: #ffffff; --radius: 0.5rem; --gap: 1rem; --transition: 0.3s; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: var(--bg); font-family: 'Noto Sans TC', sans-serif; }
+    body { display: flex; justify-content: center; align-items: center; padding: var(--gap); }
+    .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; display: flex; flex-direction: column; padding: var(--gap); max-height: 100%; }
+    .logo { display: block; margin: 0 auto var(--gap); max-width: 250px; }
+    h2 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: var(--gap); font-weight: 700; }
+    .announcement-box { background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: var(--gap); font-size: 0.95rem; color: #8a6d3b; }
+    .announcement-box p { margin: 0.25rem 0; }
+    form { flex: 1; display: flex; flex-direction: column; gap: var(--gap); overflow-y: auto; }
+    label { font-size: 1rem; font-weight: 500; }
+    input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); transition: border-color var(--transition), box-shadow var(--transition); font-family: 'Noto Sans TC', sans-serif;}
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,123,255,0.2); outline: none; }
+    textarea { resize: vertical; min-height: 60px; }
+    #currentCategory { font-size: 1rem; color: #374151; margin-bottom: 0.5rem; min-height: 1.2em; font-weight: bold; }
+    #itemsContainer { display: flex; flex-wrap: wrap; gap: var(--gap); }
+    .info-message, .loading { font-size: 1rem; color: #6b7280; padding: 1rem; text-align: center; width: 100%; }
+    .item-option { background: #fff; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; padding: 0.75rem; flex: 1 1 calc(50% - var(--gap)); transition: box-shadow var(--transition); cursor: pointer; }
+    .item-option:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    @media (max-width: 900px) { .item-option { flex: 1 1 calc(50% - var(--gap)); } }
+    @media (max-width: 600px) { .item-option { flex-basis: 100%; } }
+    .item-label { font-size: 1.1rem; }
+    .item-unit { font-size: 0.9rem; color: #6b7280; margin-left: 0.5rem; }
+    .item-price { font-size: 0.9rem; color: var(--primary); font-weight: 700; }
+    .qty-control { display: flex; align-items: center; }
+    .qty-control input { width: 50px; text-align: center; border: 1px solid #d1d5db; border-radius: var(--radius); margin: 0 0.25rem; padding: 0.25rem; }
+    .qty-control button { background: #e5e7eb; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: background-color var(--transition); }
+    .qty-control button:hover { background: #d1d5db; }
+    .submit-btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem; font-size: 1.1rem; border-radius: var(--radius); cursor: pointer; transition: background-color var(--transition); }
+    .submit-btn:hover { background: var(--primary-hover); }
+    .submit-btn:disabled { background: #a5d8ff; cursor: not-allowed; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+    .modal.active { display: flex; justify-content: center; align-items: center; }
+    .modal-content { background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: var(--radius); }
+    .modal-header { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
+    .modal-body { max-height: 60vh; overflow-y: auto; }
+    .confirm-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+    .remove-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+    .modal-footer { margin-top: 1rem; text-align: right; }
+    .modal-footer button { padding: 0.6rem 1.2rem; border-radius: var(--radius); border: none; cursor: pointer; }
+    .btn-cancel { background-color: #d1d5db; }
+    .btn-confirm { background-color: var(--primary); color: white; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="logo.png" alt="Logo" class="logo"/>
+    <h2>三能國際 線上訂購</h2>
+    
+    <div class="announcement-box">
+      <p><strong>注意：</strong>每日訂單截止時間為15：00，15：00後為隔日訂單。</p>
+      <p>指定到貨時間或有特殊事項要告知，請善用備註欄喔!</p>
+    </div>
+
+    <form id="orderForm">
+      <label>訂購人/店家名稱</label>
+      <input id="name" required placeholder="請輸入您的名稱或店家名稱"/>
+      <label>電話 (選填)</label>
+      <input id="phone" placeholder="請輸入聯絡電話"/>
+      
+      <label>選擇類別</label>
+      <select id="category" disabled>
+        <option disabled selected value="">請先輸入訂購人名稱</option>
+      </select>
+      
+      <label for="remarks">備註 (選填)</label>
+      <textarea id="remarks" placeholder="指定到貨時間或特殊事項請填寫於此"></textarea>
+
+      <div id="currentCategory"></div>
+
+      <div id="itemsContainer">
+        <div class="info-message">請先輸入訂購人並選擇商品類別</div>
+      </div>
+      <button id="btn" class="submit-btn" type="submit">送出訂單</button>
+    </form>
+  </div>
+
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">請確認您的訂單</div>
+      <div class="modal-body" id="confirmList"></div>
+      <div class="modal-footer">
+        <button class="btn-cancel">取消</button>
+        <button class="btn-confirm">確認送出</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyIdS6xHBQKENOS6eMh28hd1pFgefqcmg0NV2BcCwL1PxxceQAZ7Tpp1ENYjw_Ub_Pxfg/exec';
+    const pending = {};
+
+    let allCategories = [];
+
+    function jsonp(params) {
+      return new Promise((resolve, reject) => {
+        const cb = 'cb_' + Date.now() + Math.random().toString(36).substr(2);
+        window[cb] = data => {
+          try { delete window[cb]; document.getElementById(cb).remove(); } catch (e) {}
+          resolve(data);
+        };
+        const script = document.createElement('script');
+        script.id = cb;
+        script.src = API_URL + '?' + new URLSearchParams({...params, callback: cb});
+        script.onerror = () => {
+          try { delete window[cb]; script.remove(); } catch (e) {}
+          reject(new Error('JSONP error'));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    async function initializeApp() {
+        document.getElementById('name').placeholder = "資料載入中，請稍候...";
+        try {
+            const data = await jsonp({ action: 'getInitialData' });
+            if (data.error) throw new Error(data.error);
+            allCategories = data.categories || [];
+            document.getElementById('name').placeholder = "請輸入您的名稱或店家名稱";
+        } catch (e) {
+            alert('系統初始化失敗，請重新整理頁面：' + e.message);
+            document.getElementById('name').placeholder = "初始化失敗，請重整";
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initializeApp();
+
+      const nameInput = document.getElementById('name');
+      const categorySelect = document.getElementById('category');
+      
+      // 【修改】邏輯簡化：只要有輸入名稱，就啟用類別選單
+      nameInput.addEventListener('input', () => {
+        const name = nameInput.value.trim();
+        if (name) {
+          categorySelect.disabled = false;
+          categorySelect.innerHTML = '<option disabled selected value="">請選擇類別</option>' +
+            allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+        } else {
+          categorySelect.disabled = true;
+          categorySelect.innerHTML = '<option disabled selected value="">請先輸入訂購人名稱</option>';
+          document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請先輸入訂購人並選擇商品類別</div>';
+          document.getElementById('currentCategory').textContent = '';
+        }
+      });
+
+      categorySelect.addEventListener('change', () => {
+        const cat = categorySelect.value;
+        if (!cat) return;
+        loadItems(cat);
+      });
+
+      // 【修改】移除提交時的客戶驗證
+      document.getElementById('orderForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const arr = Object.values(pending);
+        if (!arr.length) return alert('請至少選擇一個品項！');
+        // 直接顯示確認視窗
+        showConfirmModal(arr);
+      });
+
+      document.querySelector('.btn-cancel').addEventListener('click', () => {
+        document.getElementById('confirmModal').classList.remove('active');
+      });
+
+      document.querySelector('.btn-confirm').addEventListener('click', async () => {
+        const arr = Object.values(pending);
+        const btn = document.querySelector('.btn-confirm');
+        btn.disabled = true;
+        btn.textContent = '送出中…';
+        try {
+          const res = await jsonp({
+            action: 'submitOrder',
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            remarks: document.getElementById('remarks').value.trim(),
+            orders: JSON.stringify(arr)
+          });
+          if (res.error) throw new Error(res.error);
+          
+          // 【修改】統一顯示感謝訊息，並顯示總金額
+          alert(`感謝您的訂單！\n訂單總金額：${res.total} 元`);
+
+          document.getElementById('orderForm').reset();
+          document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請先輸入訂購人並選擇商品類別</div>';
+          document.getElementById('currentCategory').textContent = '';
+          categorySelect.innerHTML = '<option disabled selected value="">請先輸入訂購人名稱</option>';
+          categorySelect.disabled = true;
+          for (let k in pending) delete pending[k];
+
+        } catch (err) {
+          alert('送出失敗：' + err.message);
+        } finally {
+          btn.textContent = '確認送出';
+          btn.disabled = false;
+          document.getElementById('confirmModal').classList.remove('active');
+        }
+      });
+      
+      document.getElementById('confirmList').addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('remove-btn')) {
+          const itemName = e.target.dataset.itemName;
+          if (!itemName) return;
+          delete pending[itemName];
+          
+          const mainItemCheckbox = document.querySelector(`.item-option input[type="checkbox"][value="${itemName}"]`);
+          if (mainItemCheckbox) {
+            const parentDiv = mainItemCheckbox.closest('.item-option');
+            parentDiv.querySelector('input[type="checkbox"]').checked = false;
+            parentDiv.querySelector('input[type="number"]').value = 0;
+          }
+          
+          showConfirmModal(Object.values(pending));
+        }
+      });
+    });
+
+    async function loadItems(cat) {
+      const container = document.getElementById('itemsContainer');
+      const current = document.getElementById('currentCategory');
+      current.textContent = `當前類別：${cat}`;
+      container.innerHTML = '<div class="loading">品項載入中…</div>';
+      let items;
+      try {
+        items = await jsonp({ action: 'getItemsByCategory', cat: cat });
+        if (items.error) throw new Error(items.error);
+      } catch (e) {
+        alert('載入品項失敗：' + e.message);
+        container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>';
+        return;
+      }
+      container.innerHTML = '';
+      if(items.length === 0) {
+        container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>';
+        return;
+      }
+
+      items.forEach(o => {
+        const div = document.createElement('div');
+        div.className = 'item-option';
+        const exist = pending[o.item] || { qty: 0 };
+        
+        // 【修改】直接顯示價格，不再判斷使用者類型
+        const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`;
+        
+        const unitText = o.unit ? ` / ${o.unit}` : '';
+        div.innerHTML = `
+        <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}">
+        <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div>
+        <div class="qty-control">
+            <button type="button" class="qty-minus">−</button>
+            <input type="number" min="0" value="${exist.qty}">
+            <button type="button" class="qty-plus">＋</button>
+        </div>
+        `;
+
+        const cb = div.querySelector('input[type="checkbox"]');
+        const qtyIn = div.querySelector('input[type="number"]');
+        const btnM = div.querySelector('.qty-minus');
+        const btnP = div.querySelector('.qty-plus');
+
+        function update(v) {
+            v = Math.max(0, parseInt(v, 10) || 0);
+            qtyIn.value = v;
+            cb.checked = v > 0;
+            if (v > 0) {
+                pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v };
+            } else {
+                delete pending[o.item];
+            }
+        }
+
+        btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1));
+        btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1));
+        qtyIn.addEventListener('input', () => update(qtyIn.value));
+        cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); });
+        div.addEventListener('click', e => {
+            if ([btnM, btnP, qtyIn, cb].includes(e.target)) return;
+            update(cb.checked ? 0 : 1);
+        });
+        container.appendChild(div);
+      });
+    }
+
+    function showConfirmModal(arr) {
+      const list = document.getElementById('confirmList');
+      list.innerHTML = '';
+      
+      if (arr.length > 0) {
+        arr.forEach(o => {
+          // 【修改】直接顯示價格，不再判斷使用者類型
+          const priceInfo = ` (NT$ ${o.price})`;
+          const unitText = o.unit ? ` / ${o.unit}` : '';
+          const row = document.createElement('div');
+          row.className = 'confirm-item';
+          row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span><button class="remove-btn" data-item-name="${o.item}">🗑️</button>`;
+          list.appendChild(row);
+        });
+      } else {
+        list.innerHTML = '<div>您的訂單是空的。</div>';
+      }
+
+      document.getElementById('confirmModal').classList.add('active');
+      document.querySelector('.btn-confirm').disabled = arr.length === 0;
+    }
+  </script>
+</body>
+</html>
