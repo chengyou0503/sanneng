@@ -17,10 +17,9 @@
     h2 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: var(--gap); font-weight: 700; }
     .welcome-msg { text-align: center; margin-bottom: 1rem; font-size: 1.1rem; }
     .announcement-box { background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: var(--gap); font-size: 0.95rem; color: #8a6d3b; }
-    .announcement-box p { margin: 0.25rem 0; }
     form { display: flex; flex-direction: column; gap: var(--gap); }
     label { font-size: 1rem; font-weight: 500; }
-    input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); transition: border-color var(--transition), box-shadow var(--transition); font-family: 'Noto Sans TC', sans-serif;}
+    input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); font-family: 'Noto Sans TC', sans-serif;}
     textarea { resize: vertical; min-height: 60px; }
     #currentCategory { font-size: 1rem; color: #374151; margin-bottom: 0.5rem; min-height: 1.2em; font-weight: bold; }
     #itemsContainer { display: flex; flex-wrap: wrap; gap: var(--gap); }
@@ -54,8 +53,7 @@
     <div class="welcome-msg" id="welcomeMsg"></div>
     
     <div class="announcement-box">
-      <p><strong>注意：</strong>每日訂單截止時間為15：00，15：00後為隔日訂單。</p>
-      <p>指定到貨時間或有特殊事項要告知，請善用備註欄喔!</p>
+      <p><strong>注意：</strong>每日訂單截止時間為15：00。</p>
     </div>
 
     <form id="orderForm">
@@ -69,7 +67,7 @@
       <textarea id="remarks" placeholder="指定到貨時間或特殊事項請填寫於此"></textarea>
       <div id="currentCategory"></div>
       <div id="itemsContainer"><div class="info-message">請先選擇商品類別</div></div>
-      <button id="submitBtn" class="submit-btn" type="submit">送出訂單</button>
+      <button id="submitBtn" class="submit-btn" type="submit">確認訂單</button>
     </form>
   </div>
 
@@ -85,11 +83,8 @@
   </div>
 
   <script>
-    // ==========================================================
-    // ===                 【第 1 步】重要設定                 ===
-    // ==========================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyT8k_vUibr9CD_ijFXWjPuzOub7opUWyrSjiYb7s5EQ2UVqISGat4BtKga0BCk7Sh8Gw/exec';        // <--- 務必替換！
-    const LINE_LOGIN_CLIENT_ID = '2008189875'; // <--- 已填入你的 Channel ID
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzy5eD_OwM_eQYwHN5Y7N0dZPr7-zoGbgLhJ7Ydkmff3IhbZs1Bzz7HIdXCQSN4l4n-fg/exec';
+    const LINE_LOGIN_CLIENT_ID = '2008189875';
 
     let currentUser = null;
     const pending = {};
@@ -203,8 +198,39 @@
           const div = document.createElement('div');
           div.className = 'item-option';
           const exist = pending[o.item] || { qty: 0 };
-          div.innerHTML = `...`; // 省略品項 HTML 結構，與舊版相同
-          // ... 綁定品項增減事件 ...
+          const priceDisplay = `<br><span style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">NT$ ${o.price}</span>`;
+          const unitText = o.unit ? ` / ${o.unit}` : '';
+
+          div.innerHTML = `
+            <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}" style="transform: scale(1.5); margin-right: 10px;">
+            <div style="font-size: 1.1rem;">${o.item}<span style="font-size: 0.9rem; color: #6b7280; margin-left: 0.5rem;">${unitText}</span>${priceDisplay}</div>
+            <div class="qty-control">
+                <button type="button" class="qty-minus">−</button>
+                <input type="number" min="0" value="${exist.qty}" style="width: 50px; text-align: center;">
+                <button type="button" class="qty-plus">＋</button>
+            </div>`;
+          
+          const cb = div.querySelector('input[type="checkbox"]');
+          const qtyIn = div.querySelector('input[type="number"]');
+          const update = (v) => {
+            v = Math.max(0, parseInt(v, 10) || 0);
+            qtyIn.value = v;
+            cb.checked = v > 0;
+            if (v > 0) {
+              pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v };
+            } else {
+              delete pending[o.item];
+            }
+          };
+
+          div.querySelector('.qty-plus').addEventListener('click', () => update(qtyIn.value * 1 + 1));
+          div.querySelector('.qty-minus').addEventListener('click', () => update(qtyIn.value * 1 - 1));
+          qtyIn.addEventListener('input', () => update(qtyIn.value));
+          cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); });
+          div.addEventListener('click', e => {
+            if (e.target.closest('.qty-control, input[type="checkbox"]')) return;
+            update(cb.checked ? 0 : 1);
+          });
           container.appendChild(div);
         });
       } catch (err) {
@@ -226,7 +252,14 @@
         try {
             const res = await callApi('submitOrder', 'POST', payload);
             alert(`訂單已成功送出！總金額：${res.total} 元`);
-            // ... 重置表單 ...
+            
+            document.getElementById('orderForm').reset();
+            document.getElementById('name').value = currentUser.displayName;
+            document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>';
+            document.getElementById('currentCategory').textContent = '';
+            document.getElementById('category').selectedIndex = 0;
+            for (let k in pending) delete pending[k];
+
         } catch (err) {
             alert(`送出訂單失敗: ${err.message}`);
         } finally {
@@ -238,9 +271,22 @@
 
     function showConfirmModal() {
         const list = document.getElementById('confirmList');
+        const arr = Object.values(pending);
         list.innerHTML = '';
-        // ... 根據 pending 物件產生確認列表的 HTML ...
+        if (arr.length > 0) {
+            arr.forEach(o => {
+                const priceInfo = ` (NT$ ${o.price})`;
+                const unitText = o.unit ? ` / ${o.unit}` : '';
+                const row = document.createElement('div');
+                row.className = 'confirm-item';
+                row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span>`;
+                list.appendChild(row);
+            });
+        } else {
+            list.innerHTML = '<div>您的訂單是空的。</div>';
+        }
         document.getElementById('confirmModal').classList.add('active');
+        document.querySelector('.btn-confirm').disabled = arr.length === 0;
     }
   </script>
 </body>
