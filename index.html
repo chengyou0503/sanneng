@@ -63,7 +63,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyhW7iI3EPbiOY_UxSY_OV4CYMtFfDq6ZbMqtLnKDsuTjn6uGherVATibBGFejoVeOOWg/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbx470LCKwqJln1wdWacGC-KIZxWpv3x7JX00LxeSVVodj4HdPGJH0Mu4IZQGTfiq72U/exec';
     const LINE_LOGIN_CLIENT_ID = '2008189875';
 
     let currentUser = null;
@@ -98,6 +98,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      apiCall('dummyAction', 'POST').then(res => alert(JSON.stringify(res))).catch(err => alert(err));
       if (API_URL.includes('YOUR_UNIQUE_WEB_APP_URL')) {
         loadingErrorEl.textContent = '錯誤：前端尚未設定後端 API_URL！';
         return;
