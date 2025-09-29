@@ -6,294 +6,227 @@
   <title>三能國際 線上訂購</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
-    :root { --primary: #007bff; --primary-hover: #0056b3; --bg: #f9fafb; --card-bg: #ffffff; --radius: 0.5rem; --gap: 1rem; --transition: 0.3s; }
+    :root { --primary: #007bff; --bg: #f9fafb; --card-bg: #ffffff; --radius: 0.5rem; --gap: 1rem; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100vw; min-height: 100vh; background: var(--bg); font-family: 'Noto Sans TC', sans-serif; }
+    html, body { width: 100%; min-height: 100vh; background: var(--bg); font-family: 'Noto Sans TC', sans-serif; }
     body { display: flex; justify-content: center; align-items: center; padding: var(--gap); }
-    .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; display: flex; flex-direction: column; padding: var(--gap); }
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; font-size: 1.2rem; text-align: center; }
+    .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; padding: var(--gap); }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; text-align: center; }
     .hidden { display: none !important; }
     .logo { display: block; margin: 0 auto var(--gap); max-width: 250px; }
-    h2 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: var(--gap); font-weight: 700; }
-    .welcome-msg { text-align: center; margin-bottom: 1rem; font-size: 1.1rem; }
-    .announcement-box { background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: var(--gap); font-size: 0.95rem; color: #8a6d3b; }
+    h2 { text-align: center; color: var(--primary); margin-bottom: var(--gap); }
     form { display: flex; flex-direction: column; gap: var(--gap); }
-    label { font-size: 1rem; font-weight: 500; }
     input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); font-family: 'Noto Sans TC', sans-serif;}
-    textarea { resize: vertical; min-height: 60px; }
-    #currentCategory { font-size: 1rem; color: #374151; margin-bottom: 0.5rem; min-height: 1.2em; font-weight: bold; }
     #itemsContainer { display: flex; flex-wrap: wrap; gap: var(--gap); }
-    .info-message, .loading { font-size: 1rem; color: #6b7280; padding: 1rem; text-align: center; width: 100%; }
     .item-option { background: #fff; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; padding: 0.75rem; flex: 1 1 calc(50% - var(--gap)); cursor: pointer; }
     .qty-control { display: flex; align-items: center; }
-    .qty-control input { width: 50px; text-align: center; border: 1px solid #d1d5db; border-radius: var(--radius); margin: 0 0.25rem; padding: 0.25rem; }
-    .qty-control button { background: #e5e7eb; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+    .qty-control input { width: 50px; text-align: center; border-radius: var(--radius); margin: 0 0.25rem; padding: 0.25rem; }
+    .qty-control button { background: #e5e7eb; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; cursor: pointer; }
     .submit-btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem; font-size: 1.1rem; border-radius: var(--radius); cursor: pointer; }
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
     .modal.active { display: flex; justify-content: center; align-items: center; }
-    .modal-content { background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: var(--radius); }
-    .modal-header { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
+    .modal-content { background-color: #fefefe; padding: 20px; width: 90%; max-width: 500px; border-radius: var(--radius); }
     .modal-body { max-height: 60vh; overflow-y: auto; }
-    .confirm-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
     .modal-footer { margin-top: 1rem; text-align: right; }
-    .btn-cancel { background-color: #d1d5db; }
-    .btn-confirm { background-color: var(--primary); color: white; }
+    .btn-confirm { background-color: var(--primary); color: white; padding: 0.5rem 1rem; border: none; border-radius: var(--radius); }
   </style>
 </head>
 <body>
-
   <div id="loadingOverlay" class="loading-overlay">
-    <p>正在與 LINE 連線，請稍候...</p>
+    <p>正在與 LINE 連線...</p>
     <p id="loadingError" style="color: red; margin-top: 1rem; font-size: 0.9rem; max-width: 90%;"></p>
   </div>
   
   <div id="app" class="card hidden">
     <img src="logo.png" alt="Logo" class="logo"/>
     <h2>三能國際 線上訂購</h2>
-    <div class="welcome-msg" id="welcomeMsg"></div>
-    
-    <div class="announcement-box">
-      <p><strong>注意：</strong>每日訂單截止時間為15：00。</p>
-    </div>
-
+    <p id="welcomeMsg" style="text-align: center; margin-bottom: 1rem;"></p>
     <form id="orderForm">
-      <label>訂購人/店家名稱</label>
-      <input id="name" required />
-      <label>電話 (選填)</label>
-      <input id="phone" placeholder="請輸入聯絡電話"/>
-      <label>選擇類別</label>
-      <select id="category" disabled><option disabled selected value="">請先選擇類別</option></select>
-      <label for="remarks">備註 (選填)</label>
-      <textarea id="remarks" placeholder="指定到貨時間或特殊事項請填寫於此"></textarea>
-      <div id="currentCategory"></div>
-      <div id="itemsContainer"><div class="info-message">請先選擇商品類別</div></div>
-      <button id="submitBtn" class="submit-btn" type="submit">確認訂單</button>
+      <label>訂購人/店家名稱: <input id="name" required /></label>
+      <label>電話 (選填): <input id="phone" /></label>
+      <label>選擇類別: <select id="category" disabled><option>載入中...</option></select></label>
+      <label>備註 (選填): <textarea id="remarks"></textarea></label>
+      <div id="itemsContainer"></div>
+      <button class="submit-btn" type="submit">確認訂單</button>
     </form>
   </div>
 
   <div id="confirmModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">請確認您的訂單</div>
-      <div class="modal-body" id="confirmList"></div>
+      <h3>請確認您的訂單</h3>
+      <div id="confirmList" class="modal-body"></div>
       <div class="modal-footer">
-        <button type="button" class="btn-cancel">取消</button>
+        <button type="button" onclick="document.getElementById('confirmModal').classList.remove('active')">取消</button>
         <button type="button" class="btn-confirm">確認送出</button>
       </div>
     </div>
   </div>
 
   <script>
-    // ===================================================================================
-    // === 📌【非常重要】請將下面的 URL 替換成你從 Google Apps Script 部署後複製的網址 ===
-    // ===================================================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxU8NwJDWUJcdzN2kS0oH6r7lxX-OdTnS1e20rdfhR9QDVY-kGSr7qfW9bzssq8ZmwWVA/exec';
-
-    const LINE_LOGIN_CLIENT_ID = '2008189875'; // 請確認這是你的 LINE Login Client ID
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz3YtKlvErm8ud0MAIPANflstl6BjUFQIbIal7UEN5kfjkXOAWit6DPFIISjk4lnLYefg/exec';
+    const LINE_LOGIN_CLIENT_ID = '2008189875';
 
     let currentUser = null;
     const pending = {};
 
-    async function callApi(action, method = 'GET', body = null) {
-      const isPost = method.toUpperCase() === 'POST';
-      const url = isPost ? API_URL : `${API_URL}?action=${action}&${new URLSearchParams(body || {})}`;
-      const options = {
-        method: method,
-        mode: 'cors',
-        headers: {},
-        redirect: 'follow',
-      };
-      if (isPost) {
-        options.headers['Content-Type'] = 'text/plain;charset=UTF-8';
-        options.body = JSON.stringify({ action, ...body });
-      }
+    const nameEl = document.getElementById('name');
+    const welcomeMsgEl = document.getElementById('welcomeMsg');
+    const categoryEl = document.getElementById('category');
+    const itemsContainerEl = document.getElementById('itemsContainer');
+    const loadingOverlayEl = document.getElementById('loadingOverlay');
+    const loadingErrorEl = document.getElementById('loadingError');
+    const appEl = document.getElementById('app');
+    const orderFormEl = document.getElementById('orderForm');
 
+    async function apiCall(action, method = 'GET', body = null) {
+      const url = method === 'POST' ? API_URL : `${API_URL}?action=${action}&${new URLSearchParams(body || {})}`;
       try {
-        const response = await fetch(url, options);
-        if (!response.ok) { // 更穩健的錯誤檢查
-          throw new Error(`伺服器回應錯誤: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
+        const res = await fetch(url, {
+          method,
+          mode: 'cors',
+          headers: method === 'POST' ? { 'Content-Type': 'text/plain;charset=UTF-8' } : {},
+          body: method === 'POST' ? JSON.stringify({ action, ...body }) : null
+        });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
         if (data.error) throw new Error(data.error);
         return data;
       } catch (error) {
-        console.error(`API Call Failed for action "${action}":`, error);
+        console.error(`API Call Failed [${action}]:`, error);
         throw error;
       }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const loadingErrorP = document.getElementById('loadingError');
-      if (API_URL === 'YOUR_APPS_SCRIPT_DEPLOYMENT_URL_GOES_HERE') {
-        loadingErrorP.textContent = '錯誤：前端尚未設定後端 API_URL！請檢查 HTML 檔案中的 const API_URL。';
+      if (API_URL.includes('YOUR_UNIQUE_WEB_APP_URL')) {
+        loadingErrorEl.textContent = '錯誤：前端尚未設定後端 API_URL！';
         return;
       }
       
       const params = new URLSearchParams(window.location.search);
-      const code = params.get('code');
-      const error = params.get('error');
-
-      if (error) {
-         loadingErrorP.textContent = `LINE 登入失敗：${params.get('error_description') || '您可能拒絕了授權'}`;
-         return;
+      if (params.has('error')) {
+        loadingErrorEl.textContent = `LINE 登入失敗：${params.get('error_description')}`;
+        return;
       }
 
-      if (code) {
+      if (params.has('code')) {
+        loadingOverlayEl.querySelector('p').textContent = '身份驗證成功，正在載入資料...';
         try {
-          document.getElementById('loadingOverlay').querySelector('p').textContent = '身份驗證成功，正在載入資料...';
-          const res = await callApi('handleLineLogin', 'POST', { code });
-          currentUser = res.profile;
+          const { profile } = await apiCall('handleLineLogin', 'POST', { code: params.get('code') });
+          currentUser = profile;
           window.history.replaceState({}, document.title, window.location.pathname);
-          main();
+          await main();
         } catch (err) {
-          loadingErrorP.textContent = `LINE 驗證失敗: ${err.message}`;
+          loadingErrorEl.textContent = `LINE 驗證失敗: ${err.message}`;
         }
       } else {
-        redirectToLineLogin();
+        const state = Date.now();
+        const redirectUri = window.location.href.split('?')[0];
+        window.location.href = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_LOGIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=profile%20openid&state=${state}`;
       }
     });
 
-    function redirectToLineLogin() {
-      const state = Date.now().toString();
-      const redirectUri = window.location.href.split('?')[0];
-      const authUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_LOGIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=profile%20openid&state=${state}`;
-      window.location.href = authUrl;
-    }
-
     async function main() {
-      document.getElementById('loadingOverlay').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
-      document.getElementById('welcomeMsg').innerHTML = `歡迎, <strong>${currentUser.displayName}</strong>！`;
-      document.getElementById('name').value = currentUser.displayName;
+      loadingOverlayEl.classList.add('hidden');
+      appEl.classList.remove('hidden');
+      welcomeMsgEl.innerHTML = `歡迎, <strong>${currentUser.displayName}</strong>！`;
+      nameEl.value = currentUser.displayName;
       
-      bindEventListeners();
+      orderFormEl.addEventListener('submit', showConfirmModal);
+      categoryEl.addEventListener('change', () => loadItems(categoryEl.value));
+      document.querySelector('.btn-confirm').addEventListener('click', submitOrder);
 
       try {
-        const data = await callApi('getInitialData', 'GET');
-        const categorySelect = document.getElementById('category');
-        categorySelect.disabled = false;
-        categorySelect.innerHTML = '<option disabled selected value="">請選擇類別</option>' +
-          (data.categories || []).map(c => `<option value="${c}">${c}</option>`).join('');
+        const { categories } = await apiCall('getInitialData');
+        categoryEl.innerHTML = '<option value="">請選擇類別</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        categoryEl.disabled = false;
       } catch (err) {
         alert(`載入商品類別失敗: ${err.message}`);
       }
     }
 
-    function bindEventListeners() {
-        document.getElementById('category').addEventListener('change', (e) => loadItems(e.target.value));
-        document.getElementById('orderForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (Object.keys(pending).length === 0) return alert('請至少選擇一個品項！');
-            showConfirmModal();
-        });
-        document.querySelector('.btn-cancel').addEventListener('click', () => document.getElementById('confirmModal').classList.remove('active'));
-        document.querySelector('.btn-confirm').addEventListener('click', submitOrder);
-    }
-
     async function loadItems(cat) {
+      itemsContainerEl.innerHTML = cat ? '載入中...' : '';
       if (!cat) return;
-      const container = document.getElementById('itemsContainer');
-      document.getElementById('currentCategory').textContent = `當前類別：${cat}`;
-      container.innerHTML = '<div class="loading">品項載入中…</div>';
       try {
-        const items = await callApi('getItemsByCategory', 'GET', { cat });
-        container.innerHTML = '';
-        if (items.length === 0) {
-          container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>';
-          return;
-        }
-        items.forEach(o => {
+        const items = await apiCall('getItemsByCategory', 'GET', { cat });
+        itemsContainerEl.innerHTML = '';
+        items.forEach(item => {
+          const itemState = pending[item.item] || { qty: 0 };
           const div = document.createElement('div');
           div.className = 'item-option';
-          const exist = pending[o.item] || { qty: 0 };
-          const priceDisplay = `<br><span style="font-size: 0.9rem; color: var(--primary); font-weight: 700;">NT$ ${o.price}</span>`;
-          const unitText = o.unit ? ` / ${o.unit}` : '';
-
           div.innerHTML = `
-            <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}" style="transform: scale(1.5); margin-right: 10px;">
-            <div style="font-size: 1.1rem;">${o.item}<span style="font-size: 0.9rem; color: #6b7280; margin-left: 0.5rem;">${unitText}</span>${priceDisplay}</div>
+            <input type="checkbox" ${itemState.qty > 0 ? 'checked' : ''} style="transform: scale(1.5);">
+            <div>${item.item} (${item.unit})<br><span style="color:var(--primary);font-weight:bold;">NT$ ${item.price}</span></div>
             <div class="qty-control">
-                <button type="button" class="qty-minus">−</button>
-                <input type="number" min="0" value="${exist.qty}" style="width: 50px; text-align: center;">
-                <button type="button" class="qty-plus">＋</button>
+              <button type="button" class="qty-minus">−</button>
+              <input type="number" min="0" value="${itemState.qty}">
+              <button type="button" class="qty-plus">＋</button>
             </div>`;
+          itemsContainerEl.appendChild(div);
+
+          const qtyInput = div.querySelector('input[type="number"]');
+          const checkbox = div.querySelector('input[type="checkbox"]');
           
-          const cb = div.querySelector('input[type="checkbox"]');
-          const qtyIn = div.querySelector('input[type="number"]');
-          const update = (v) => {
-            v = Math.max(0, parseInt(v, 10) || 0);
-            qtyIn.value = v;
-            cb.checked = v > 0;
-            if (v > 0) {
-              pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v };
-            } else {
-              delete pending[o.item];
-            }
+          const update = (newQty) => {
+            const qty = Math.max(0, parseInt(newQty, 10) || 0);
+            qtyInput.value = qty;
+            checkbox.checked = qty > 0;
+            if (qty > 0) pending[item.item] = { ...item, qty };
+            else delete pending[item.item];
           };
 
-          div.querySelector('.qty-plus').addEventListener('click', () => update(qtyIn.value * 1 + 1));
-          div.querySelector('.qty-minus').addEventListener('click', () => update(qtyIn.value * 1 - 1));
-          qtyIn.addEventListener('input', () => update(qtyIn.value));
-          cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); });
-          div.addEventListener('click', e => {
-            if (e.target.closest('.qty-control, input[type="checkbox"]')) return;
-            update(cb.checked ? 0 : 1);
-          });
-          container.appendChild(div);
+          div.querySelector('.qty-plus').onclick = () => update(qtyInput.valueAsNumber + 1);
+          div.querySelector('.qty-minus').onclick = () => update(qtyInput.valueAsNumber - 1);
+          qtyInput.oninput = () => update(qtyInput.value);
+          checkbox.onchange = () => update(checkbox.checked ? 1 : 0);
+          div.onclick = (e) => {
+              if (e.target.tagName !== 'DIV') return;
+              update(checkbox.checked ? 0 : 1);
+          };
         });
       } catch (err) {
-        container.innerHTML = `<div class="info-message">載入品項失敗: ${err.message}</div>`;
+        itemsContainerEl.innerHTML = `載入品項失敗: ${err.message}`;
       }
     }
 
-    async function submitOrder() {
-        const btn = document.querySelector('.btn-confirm');
-        btn.disabled = true;
-        btn.textContent = '送出中…';
-        const payload = {
-            name: document.getElementById('name').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            remarks: document.getElementById('remarks').value.trim(),
-            orders: Object.values(pending),
-            user: currentUser
-        };
-        try {
-            const res = await callApi('submitOrder', 'POST', payload);
-            alert(`訂單已成功送出！總金額：${res.total} 元`);
-            
-            document.getElementById('orderForm').reset();
-            document.getElementById('name').value = currentUser.displayName;
-            document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>';
-            document.getElementById('currentCategory').textContent = '';
-            document.getElementById('category').selectedIndex = 0;
-            for (let k in pending) delete pending[k];
-
-        } catch (err) {
-            alert(`送出訂單失敗: ${err.message}`);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '確認送出';
-            document.getElementById('confirmModal').classList.remove('active');
-        }
+    function showConfirmModal(e) {
+      e.preventDefault();
+      if (Object.keys(pending).length === 0) return alert('請至少選擇一個品項！');
+      
+      const confirmList = document.getElementById('confirmList');
+      confirmList.innerHTML = Object.values(pending).map(p => `<div>${p.item} x ${p.qty}</div>`).join('');
+      document.getElementById('confirmModal').classList.add('active');
     }
 
-    function showConfirmModal() {
-        const list = document.getElementById('confirmList');
-        const arr = Object.values(pending);
-        list.innerHTML = '';
-        if (arr.length > 0) {
-            arr.forEach(o => {
-                const priceInfo = ` (NT$ ${o.price})`;
-                const unitText = o.unit ? ` / ${o.unit}` : '';
-                const row = document.createElement('div');
-                row.className = 'confirm-item';
-                row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span>`;
-                list.appendChild(row);
-            });
-        } else {
-            list.innerHTML = '<div>您的訂單是空的。</div>';
-        }
-        document.getElementById('confirmModal').classList.add('active');
-        document.querySelector('.btn-confirm').disabled = arr.length === 0;
+    async function submitOrder() {
+      const btn = document.querySelector('.btn-confirm');
+      btn.disabled = true;
+      btn.textContent = '送出中…';
+      
+      try {
+        const payload = {
+          name: nameEl.value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          remarks: document.getElementById('remarks').value.trim(),
+          orders: Object.values(pending),
+          user: currentUser
+        };
+        const res = await apiCall('submitOrder', 'POST', payload);
+        alert(`訂單已成功送出！總金額：${res.total} 元`);
+        
+        orderFormEl.reset();
+        nameEl.value = currentUser.displayName;
+        itemsContainerEl.innerHTML = '';
+        categoryEl.selectedIndex = 0;
+        Object.keys(pending).forEach(key => delete pending[key]);
+      } catch (err) {
+        alert(`送出訂單失敗: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '確認送出';
+        document.getElementById('confirmModal').classList.remove('active');
+      }
     }
   </script>
 </body>
