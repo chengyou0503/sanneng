@@ -18,57 +18,75 @@
     form { display: flex; flex-direction: column; gap: var(--gap); }
     input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); font-family: 'Noto Sans TC', sans-serif;}
     #itemsContainer { display: flex; flex-wrap: wrap; gap: var(--gap); }
-    .item-option { background: #fff; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; padding: 0.75rem; flex: 1 1 calc(50% - var(--gap)); cursor: pointer; }
+    .item-option { background: #fff; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; padding: 0.75rem; flex: 1 1 calc(50% - var(--gap)); cursor: pointer; user-select: none; }
     .qty-control { display: flex; align-items: center; }
     .qty-control input { width: 50px; text-align: center; border-radius: var(--radius); margin: 0 0.25rem; padding: 0.25rem; }
     .qty-control button { background: #e5e7eb; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; cursor: pointer; }
-    .submit-btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem; font-size: 1.1rem; border-radius: var(--radius); cursor: pointer; }
+    .submit-btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem; font-size: 1.1rem; border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s; }
+    .submit-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
     .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
     .modal.active { display: flex; justify-content: center; align-items: center; }
-    .modal-content { background-color: #fefefe; padding: 20px; width: 90%; max-width: 500px; border-radius: var(--radius); }
+    .modal-content { background-color: #fefefe; padding: 20px; width: 90%; max-width: 500px; border-radius: var(--radius); text-align: left; }
+    .modal-header { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
     .modal-body { max-height: 60vh; overflow-y: auto; }
-    .modal-footer { margin-top: 1rem; text-align: right; }
-    .btn-confirm { background-color: var(--primary); color: white; padding: 0.5rem 1rem; border: none; border-radius: var(--radius); }
+    .modal-footer { margin-top: 1.5rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: var(--radius); cursor: pointer; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn-confirm { background-color: var(--primary); color: white; }
   </style>
 </head>
 <body>
+  <!-- 載入與錯誤訊息遮罩 -->
   <div id="loadingOverlay" class="loading-overlay">
     <p>正在與 LINE 連線...</p>
-    <p id="loadingError" style="color: red; margin-top: 1rem; font-size: 0.9rem; max-width: 90%;"></p>
+    <p id="loadingError" style="color: red; margin-top: 1rem; font-size: 0.9rem; max-width: 90%; line-height: 1.5;"></p>
   </div>
   
+  <!-- 主應用程式介面 -->
   <div id="app" class="card hidden">
     <img src="logo.png" alt="Logo" class="logo"/>
     <h2>三能國際 線上訂購</h2>
     <p id="welcomeMsg" style="text-align: center; margin-bottom: 1rem;"></p>
     <form id="orderForm">
       <label>訂購人/店家名稱: <input id="name" required /></label>
-      <label>電話 (選填): <input id="phone" /></label>
+      <label>電話 (選填): <input id="phone" type="tel" /></label>
       <label>選擇類別: <select id="category" disabled><option>載入中...</option></select></label>
-      <label>備註 (選填): <textarea id="remarks"></textarea></label>
       <div id="itemsContainer"></div>
+      <label>備註 (選填): <textarea id="remarks" rows="3"></textarea></label>
       <button class="submit-btn" type="submit">確認訂單</button>
     </form>
   </div>
 
+  <!-- 訂單確認彈窗 -->
   <div id="confirmModal" class="modal">
     <div class="modal-content">
-      <h3>請確認您的訂單</h3>
+      <div class="modal-header">請確認您的訂單</div>
       <div id="confirmList" class="modal-body"></div>
       <div class="modal-footer">
-        <button type="button" onclick="document.getElementById('confirmModal').classList.remove('active')">取消</button>
-        <button type="button" class="btn-confirm">確認送出</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">取消</button>
+        <button type="button" class="btn btn-confirm">確認送出</button>
       </div>
     </div>
   </div>
 
   <script>
+    // ===============================================================
+    // ===                   前端設定 (請務必確認)                 ===
+    // ===============================================================
+    // 📌 請將此處換成你 Google Apps Script **最新部署** 的網頁應用程式網址
     const API_URL = 'https://script.google.com/macros/s/AKfycbws-2tzD8GqSjAB7s-JygRiKTDReYTPDsmZV5LTHBGSWpna7OsyaCEsSX14WY9LxWJLbA/exec';
+    
+    // 📌 請確認這是你在 LINE Developer 後台設定的 Channel ID
     const LINE_LOGIN_CLIENT_ID = '2008189875';
 
-    let currentUser = null;
-    const pending = {};
 
+    // ===============================================================
+    // ===                     核心程式邏輯                      ===
+    // ===============================================================
+    let currentUser = null;
+    const pending = {}; // 用於暫存購物車中的商品
+
+    // 取得所有 DOM 節點
     const nameEl = document.getElementById('name');
     const welcomeMsgEl = document.getElementById('welcomeMsg');
     const categoryEl = document.getElementById('category');
@@ -78,76 +96,122 @@
     const appEl = document.getElementById('app');
     const orderFormEl = document.getElementById('orderForm');
 
+    /**
+     * 統一的 API 呼叫函式 (非常重要)
+     * 負責處理 fetch、錯誤捕捉、並將後端回傳的錯誤訊息解析出來
+     */
     async function apiCall(action, method = 'GET', body = null) {
+      // 根據請求方法組合 URL
       const url = method === 'POST' ? API_URL : `${API_URL}?action=${action}&${new URLSearchParams(body || {})}`;
+      
       try {
         const res = await fetch(url, {
           method,
-          mode: 'cors',
+          mode: 'cors', // 必須為 cors 模式
+          // POST 請求的標頭與本文
           headers: method === 'POST' ? { 'Content-Type': 'text/plain;charset=UTF-8' } : {},
-          body: method === 'POST' ? JSON.stringify({ action, ...body }) : null
+          body: method === 'POST' ? JSON.stringify({ action, ...body }) : null,
+          // 如果 GAS 腳本重新導向到錯誤頁面，這個選項可以幫助處理
+          redirect: 'follow' 
         });
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        if (!res.ok) {
+          // 如果 HTTP 狀態碼不是 200-299，直接拋出錯誤
+          throw new Error(`網路錯誤，狀態碼: ${res.status}`);
+        }
+        
         const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        
+        // **關鍵**：檢查後端回傳的 JSON 中是否包含 error 欄位
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
         return data;
       } catch (error) {
-        console.error(`API Call Failed [${action}]:`, error);
+        console.error(`[API 呼叫失敗] Action: ${action}`, error);
+        // 將錯誤往上拋，讓呼叫它的地方可以處理 (例如顯示 alert)
         throw error;
       }
     }
 
+    /**
+     * 頁面載入時執行的主流程
+     */
     document.addEventListener('DOMContentLoaded', async () => {
-      if (API_URL.includes('YOUR_UNIQUE_WEB_APP_URL')) {
-        loadingErrorEl.textContent = '錯誤：前端尚未設定後端 API_URL！';
+      // 檢查1：開發者是否已替換 API_URL
+      if (API_URL.includes('AKfy') === false) {
+        loadingErrorEl.textContent = '【開發者注意】前端尚未設定後端 API_URL！請修改 index.html 中的 API_URL 常數。';
         return;
       }
       
       const params = new URLSearchParams(window.location.search);
+
+      // 檢查2：URL 是否包含來自 LINE 的錯誤訊息
       if (params.has('error')) {
-        loadingErrorEl.textContent = `LINE 登入失敗：${params.get('error_description')}`;
+        loadingErrorEl.textContent = `LINE 登入失敗：${params.get('error_description') || params.get('error')}`;
         return;
       }
 
+      // 檢查3：URL 是否包含來自 LINE 的授權碼 (code)
       if (params.has('code')) {
-        loadingOverlayEl.querySelector('p').textContent = '身份驗證成功，正在載入資料...';
+        // 如果有 code，表示使用者剛從 LINE 登入頁面跳轉回來
+        loadingOverlayEl.querySelector('p').textContent = '身份驗證成功，正在載入使用者資料...';
         try {
+          // 呼叫後端的 handleLineLogin 函式
           const { profile } = await apiCall('handleLineLogin', 'POST', { code: params.get('code') });
           currentUser = profile;
+          // 清理 URL，移除 code，避免重新整理時重複執行
           window.history.replaceState({}, document.title, window.location.pathname);
+          // 執行主應用程式邏輯
           await main();
         } catch (err) {
-          loadingErrorEl.textContent = `LINE 驗證失敗: ${err.message}`;
+          // **關鍵**：顯示從後端傳來的詳細錯誤訊息
+          loadingErrorEl.textContent = `LINE 驗證失敗，後端回傳： ${err.message}`;
         }
       } else {
-        const state = Date.now();
+        // 如果沒有 code，表示使用者是第一次進入頁面，需要導向 LINE 登入
+        const state = Date.now(); // 用於防止 CSRF 攻擊
         const redirectUri = window.location.href.split('?')[0];
-        window.location.href = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_LOGIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=profile%20openid&state=${state}`;
+        const loginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_LOGIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=profile%20openid&state=${state}`;
+        window.location.href = loginUrl;
       }
     });
 
+    /**
+     * 登入成功後，初始化應用程式介面與事件
+     */
     async function main() {
+      // 隱藏載入畫面，顯示主應用程式
       loadingOverlayEl.classList.add('hidden');
       appEl.classList.remove('hidden');
+      
+      // 顯示歡迎訊息與預填訂購人
       welcomeMsgEl.innerHTML = `歡迎, <strong>${currentUser.displayName}</strong>！`;
       nameEl.value = currentUser.displayName;
       
+      // 綁定所有事件監聽器
       orderFormEl.addEventListener('submit', showConfirmModal);
       categoryEl.addEventListener('change', () => loadItems(categoryEl.value));
       document.querySelector('.btn-confirm').addEventListener('click', submitOrder);
 
+      // 載入商品分類
       try {
         const { categories } = await apiCall('getInitialData');
-        categoryEl.innerHTML = '<option value="">請選擇類別</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        categoryEl.innerHTML = '<option value="">— 請選擇類別 —</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
         categoryEl.disabled = false;
       } catch (err) {
         alert(`載入商品類別失敗: ${err.message}`);
       }
     }
 
+    /**
+     * 根據選擇的分類，從後端載入商品項目
+     */
     async function loadItems(cat) {
       itemsContainerEl.innerHTML = cat ? '載入中...' : '';
       if (!cat) return;
+      
       try {
         const items = await apiCall('getItemsByCategory', 'GET', { cat });
         itemsContainerEl.innerHTML = '';
@@ -156,49 +220,76 @@
           const div = document.createElement('div');
           div.className = 'item-option';
           div.innerHTML = `
-            <input type="checkbox" ${itemState.qty > 0 ? 'checked' : ''} style="transform: scale(1.5);">
+            <input type="checkbox" ${itemState.qty > 0 ? 'checked' : ''} style="transform: scale(1.5); margin-right: 0.5rem;">
             <div>${item.item} (${item.unit})<br><span style="color:var(--primary);font-weight:bold;">NT$ ${item.price}</span></div>
             <div class="qty-control">
-              <button type="button" class="qty-minus">−</button>
-              <input type="number" min="0" value="${itemState.qty}">
-              <button type="button" class="qty-plus">＋</button>
+              <button type="button" class="qty-minus" aria-label="減少數量">−</button>
+              <input type="number" min="0" value="${itemState.qty}" aria-label="商品數量">
+              <button type="button" class="qty-plus" aria-label="增加數量">＋</button>
             </div>`;
           itemsContainerEl.appendChild(div);
 
           const qtyInput = div.querySelector('input[type="number"]');
           const checkbox = div.querySelector('input[type="checkbox"]');
           
+          // 更新購物車狀態的函式
           const update = (newQty) => {
             const qty = Math.max(0, parseInt(newQty, 10) || 0);
             qtyInput.value = qty;
             checkbox.checked = qty > 0;
-            if (qty > 0) pending[item.item] = { ...item, qty };
-            else delete pending[item.item];
+            if (qty > 0) {
+              pending[item.item] = { ...item, qty };
+            } else {
+              delete pending[item.item];
+            }
           };
 
+          // 綁定數量增減、輸入、勾選事件
           div.querySelector('.qty-plus').onclick = () => update(qtyInput.valueAsNumber + 1);
           div.querySelector('.qty-minus').onclick = () => update(qtyInput.valueAsNumber - 1);
-          qtyInput.oninput = () => update(qtyInput.value);
-          checkbox.onchange = () => update(checkbox.checked ? 1 : 0);
+          qtyInput.onchange = () => update(qtyInput.value); // onchange 體驗更好
+          checkbox.onchange = () => update(checkbox.checked ? (qtyInput.valueAsNumber > 0 ? qtyInput.valueAsNumber : 1) : 0);
+          
+          // 點擊整個卡片區域也能觸發勾選/取消
           div.onclick = (e) => {
-              if (e.target.tagName !== 'DIV') return;
-              update(checkbox.checked ? 0 : 1);
+              if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+              update(checkbox.checked ? 0 : (qtyInput.valueAsNumber > 0 ? qtyInput.valueAsNumber : 1));
           };
         });
       } catch (err) {
-        itemsContainerEl.innerHTML = `載入品項失敗: ${err.message}`;
+        itemsContainerEl.innerHTML = `<p style="color: red;">載入品項失敗: ${err.message}</p>`;
       }
     }
 
+    /**
+     * 顯示訂單確認彈窗
+     */
     function showConfirmModal(e) {
       e.preventDefault();
-      if (Object.keys(pending).length === 0) return alert('請至少選擇一個品項！');
+      if (Object.keys(pending).length === 0) {
+        alert('請至少選擇一個品項！');
+        return;
+      }
       
       const confirmList = document.getElementById('confirmList');
-      confirmList.innerHTML = Object.values(pending).map(p => `<div>${p.item} x ${p.qty}</div>`).join('');
+      const orderSummary = Object.values(pending)
+        .map(p => `<div>${p.item} x ${p.qty} = ${p.price * p.qty} 元</div>`)
+        .join('');
+      let totalAmount = Object.values(pending).reduce((sum, p) => sum + p.price * p.qty, 0);
+
+      confirmList.innerHTML = `
+        <p><strong>訂購人:</strong> ${document.getElementById('name').value}</p>
+        <hr style="margin: 0.5rem 0;">
+        ${orderSummary}
+        <hr style="margin: 0.5rem 0;">
+        <p><strong>總金額: ${totalAmount} 元</strong></p>
+      `;
       document.getElementById('confirmModal').classList.add('active');
     }
 
+    /**
+     * 提交訂單到後端
+     */
     async function submitOrder() {
       const btn = document.querySelector('.btn-confirm');
       btn.disabled = true;
@@ -212,17 +303,21 @@
           orders: Object.values(pending),
           user: currentUser
         };
+
         const res = await apiCall('submitOrder', 'POST', payload);
-        alert(`訂單已成功送出！總金額：${res.total} 元`);
+        alert(`訂單已成功送出！\n總金額：${res.total} 元`);
         
+        // 重設表單
         orderFormEl.reset();
         nameEl.value = currentUser.displayName;
         itemsContainerEl.innerHTML = '';
         categoryEl.selectedIndex = 0;
         Object.keys(pending).forEach(key => delete pending[key]);
       } catch (err) {
+        // 關鍵：如果後端出錯，alert 出錯誤訊息
         alert(`送出訂單失敗: ${err.message}`);
       } finally {
+        // 無論成功失敗，都恢復按鈕狀態並關閉彈窗
         btn.disabled = false;
         btn.textContent = '確認送出';
         document.getElementById('confirmModal').classList.remove('active');
