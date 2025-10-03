@@ -19,7 +19,7 @@
     .line-login-btn:hover { background-color: #008a00; }
     .line-login-btn img { width: 28px; height: 28px; margin-right: 1rem; }
     .line-login-btn.disabled { background-color: #ccc; cursor: not-allowed; }
-    .error-message { color: #d9534f; margin-top: 1rem; }
+    .error-message { color: #d9534f; margin-top: 1rem; text-align: left; background: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
 
     /* --- 訂購畫面樣式 --- */
     .order-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; display: flex; flex-direction: column; padding: var(--gap); max-height: 100%; }
@@ -73,7 +73,7 @@
       <img src="https://developers.line.biz/assets/img/line/btn_login_base.png" alt="LINE logo"/>
       <span id="btnText">載入中...</span>
     </a>
-    <div id="errorMessage" class="error-message"></div>
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
   </div>
 
   <!-- 訂購畫面 (預設隱藏) -->
@@ -124,26 +124,31 @@
 
   <script>
     // --- 【重要】請填入你的 Google Apps Script Web App URL ---
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxMvBO0IOupWfi3StB6x2o_6UrNMK-DprxPBmD1-dYM-A_8RTuwVHaMVD2Rl4eLzBwmWw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxaUlmjr_pY5KI7l55h4nPBo7-mgNUeAS960t5DfklubbYQU0abboyU9Ni3pzYhyg4d0Q/exec';
     
     let lineUser = {};
     const pending = {};
     let allCategories = [];
     
-    // JSONP 函式
+    // --- 修改：升級 JSONP 函式以處理後端回傳的錯誤 ---
     function jsonp(params) {
       return new Promise((resolve, reject) => {
         const cb = 'cb_' + Date.now() + Math.random().toString(36).substr(2);
         window[cb] = data => {
           try { delete window[cb]; document.getElementById(cb).remove(); } catch (e) {}
-          resolve(data);
+          // 如果後端回傳的 data 物件中，包含 error 屬性，就 reject 這個 Promise
+          if (data.error) {
+            reject(data.error);
+          } else {
+            resolve(data);
+          }
         };
         const script = document.createElement('script');
         script.id = cb;
         script.src = API_URL + '?' + new URLSearchParams({...params, callback: cb});
-        script.onerror = () => {
+        script.onerror = () => { // 處理網路層級的錯誤
           try { delete window[cb]; script.remove(); } catch (e) {}
-          reject(new Error('JSONP error'));
+          reject({ message: 'Script error: 無法連接到 API 伺服器，請檢查網路連線或 API_URL 是否正確。' });
         };
         document.body.appendChild(script);
       });
@@ -152,10 +157,8 @@
     // 初始化訂購頁面函式
     async function initializeOrderPage() {
       document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
-
       try {
         const data = await jsonp({ action: 'getInitialData' });
-        if (data.error) throw new Error(data.error);
         allCategories = data.categories || [];
         
         const categorySelect = document.getElementById('category');
@@ -164,9 +167,10 @@
           allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
         
         document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>';
-
-      } catch (e) {
-        alert('系統初始化失敗，請重新整理頁面：' + e.message);
+      } catch (err) {
+        // --- 修改：使用 console.error 記錄詳細錯誤 ---
+        console.error('系統初始化失敗:', err);
+        alert('系統初始化失敗，請重新整理頁面。詳細錯誤請見開發者工具 Console。');
         document.getElementById('itemsContainer').innerHTML = '<div class="info-message">初始化失敗，請重整</div>';
       }
     }
@@ -179,15 +183,15 @@
       
       try {
         const data = await jsonp({ action: 'getLineLoginUrl' });
-        if (data.error) throw new Error(data.error);
-        
         loginBtn.href = data.url;
         loginBtn.classList.remove('disabled');
         btnText.textContent = '使用 LINE 帳號登入';
-
       } catch (err) {
+        // --- 修改：使用 console.error 並在頁面顯示錯誤 ---
+        console.error('初始化登入頁面失敗:', err);
         btnText.textContent = '登入失敗';
-        errorMessage.textContent = '系統錯誤，請聯繫管理員：' + err.message;
+        errorMessage.textContent = `系統錯誤，請聯繫管理員：\n${err.message}`;
+        errorMessage.style.display = 'block';
       }
     }
 
@@ -195,33 +199,41 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const loginView = document.getElementById('loginView');
       const orderView = document.getElementById('orderView');
+      const errorMessage = document.getElementById('errorMessage');
 
       const params = new URLSearchParams(window.location.search);
       const encodedUser = params.get('user');
+      const errorFromRedirect = params.get('error');
 
-      if (encodedUser) { // --- 如果 URL 有 user 參數，代表已登入 ---
+      // --- 新增：處理從後端導向回來的錯誤 ---
+      if (errorFromRedirect) {
+          console.error('LINE 登入回呼時發生錯誤:', decodeURIComponent(errorFromRedirect));
+          errorMessage.textContent = `LINE 登入失敗：\n${decodeURIComponent(errorFromRedirect)}`;
+          errorMessage.style.display = 'block';
+          await initializeLoginPage();
+          return;
+      }
+      
+      if (encodedUser) {
         try {
           lineUser = JSON.parse(atob(encodedUser));
         } catch (e) {
           console.error('解析使用者資訊失敗:', e);
+          lineUser = {};
         }
 
         if (lineUser && lineUser.userId) {
-          // 清除 URL 參數，讓頁面重整時不會重複解析
           window.history.replaceState({}, document.title, window.location.pathname);
-          // 顯示訂購頁面，隱藏登入頁面
           loginView.style.display = 'none';
           orderView.style.display = 'flex';
-          await initializeOrderPage(); // 初始化訂購頁
+          await initializeOrderPage();
         } else {
-          // user 參數解析失敗，顯示登入頁
           await initializeLoginPage();
         }
-      } else { // --- 如果 URL 沒有 user 參數，代表是新訪客 ---
-        await initializeLoginPage(); // 初始化登入頁
+      } else {
+        await initializeLoginPage();
       }
       
-      // --- 以下是訂購頁面的事件監聽 ---
       const categorySelect = document.getElementById('category');
       categorySelect.addEventListener('change', () => {
         const cat = categorySelect.value;
@@ -254,20 +266,19 @@
             orders: JSON.stringify(arr),
             lineUserId: lineUser.userId
           });
-          if (res.error) throw new Error(res.error);
           
           alert(`感謝您的訂單！\n訂單總金額：${res.total} 元`);
           
           document.getElementById('orderForm').reset();
           document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
-
           document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>';
           document.getElementById('currentCategory').textContent = '';
           categorySelect.value = '';
           for (let k in pending) delete pending[k];
-
         } catch (err) {
-          alert('送出失敗：' + err.message);
+          // --- 修改：使用 console.error ---
+          console.error('送出訂單失敗:', err);
+          alert(`送出失敗：${err.message}`);
         } finally {
           btn.textContent = '確認送出';
           btn.disabled = false;
@@ -280,20 +291,55 @@
           const itemName = e.target.dataset.itemName;
           if (!itemName) return;
           delete pending[itemName];
-          
           const mainItemCheckbox = document.querySelector(`.item-option input[type="checkbox"][value="${itemName}"]`);
           if (mainItemCheckbox) {
             const parentDiv = mainItemCheckbox.closest('.item-option');
             parentDiv.querySelector('input[type="checkbox"]').checked = false;
             parentDiv.querySelector('input[type="number"]').value = 0;
           }
-          
           showConfirmModal(Object.values(pending));
         }
       });
     });
     
-    async function loadItems(cat) { const container = document.getElementById('itemsContainer'); const current = document.getElementById('currentCategory'); current.textContent = `當前類別：${cat}`; container.innerHTML = '<div class="loading">品項載入中…</div>'; let items; try { items = await jsonp({ action: 'getItemsByCategory', cat: cat }); if (items.error) throw new Error(items.error); } catch (e) { alert('載入品項失敗：' + e.message); container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>'; return; } container.innerHTML = ''; if(items.length === 0) { container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>'; return; } items.forEach(o => { const div = document.createElement('div'); div.className = 'item-option'; const exist = pending[o.item] || { qty: 0 }; const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`; const unitText = o.unit ? ` / ${o.unit}` : ''; div.innerHTML = ` <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}"> <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div> <div class="qty-control"> <button type="button" class="qty-minus">−</button> <input type="number" min="0" value="${exist.qty}"> <button type="button" class="qty-plus">＋</button> </div> `; const cb = div.querySelector('input[type="checkbox"]'); const qtyIn = div.querySelector('input[type="number"]'); const btnM = div.querySelector('.qty-minus'); const btnP = div.querySelector('.qty-plus'); function update(v) { v = Math.max(0, parseInt(v, 10) || 0); qtyIn.value = v; cb.checked = v > 0; if (v > 0) { pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v }; } else { delete pending[o.item]; } } btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1)); btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1)); qtyIn.addEventListener('input', () => update(qtyIn.value)); cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); }); div.addEventListener('click', e => { if ([btnM, btnP, qtyIn, cb].includes(e.target)) return; update(cb.checked ? 0 : 1); }); container.appendChild(div); }); }
+    async function loadItems(cat) { 
+      const container = document.getElementById('itemsContainer'); 
+      const current = document.getElementById('currentCategory'); 
+      current.textContent = `當前類別：${cat}`; 
+      container.innerHTML = '<div class="loading">品項載入中…</div>'; 
+      try { 
+        const items = await jsonp({ action: 'getItemsByCategory', cat: cat });
+        container.innerHTML = ''; 
+        if(items.length === 0) { 
+          container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>'; 
+          return; 
+        } 
+        items.forEach(o => { 
+          const div = document.createElement('div'); 
+          div.className = 'item-option'; 
+          const exist = pending[o.item] || { qty: 0 }; 
+          const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`; 
+          const unitText = o.unit ? ` / ${o.unit}` : ''; 
+          div.innerHTML = ` <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}"> <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div> <div class="qty-control"> <button type="button" class="qty-minus">−</button> <input type="number" min="0" value="${exist.qty}"> <button type="button" class="qty-plus">＋</button> </div> `; 
+          const cb = div.querySelector('input[type="checkbox"]'); 
+          const qtyIn = div.querySelector('input[type="number"]'); 
+          const btnM = div.querySelector('.qty-minus'); 
+          const btnP = div.querySelector('.qty-plus'); 
+          function update(v) { v = Math.max(0, parseInt(v, 10) || 0); qtyIn.value = v; cb.checked = v > 0; if (v > 0) { pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v }; } else { delete pending[o.item]; } } 
+          btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1)); 
+          btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1)); 
+          qtyIn.addEventListener('input', () => update(qtyIn.value)); 
+          cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); }); 
+          div.addEventListener('click', e => { if ([btnM, btnP, qtyIn, cb].includes(e.target)) return; update(cb.checked ? 0 : 1); }); 
+          container.appendChild(div); 
+        }); 
+      } catch (err) { 
+        console.error('載入品項失敗:', err);
+        alert(`載入品項失敗：${err.message}`); 
+        container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>'; 
+      }
+    }
+    
     function showConfirmModal(arr) { const list = document.getElementById('confirmList'); list.innerHTML = ''; if (arr.length > 0) { arr.forEach(o => { const priceInfo = ` (NT$ ${o.price})`; const unitText = o.unit ? ` / ${o.unit}` : ''; const row = document.createElement('div'); row.className = 'confirm-item'; row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span><button class="remove-btn" data-item-name="${o.item}">🗑️</button>`; list.appendChild(row); }); } else { list.innerHTML = '<div>您的訂單是空的。</div>'; } document.getElementById('confirmModal').classList.add('active'); document.querySelector('.btn-confirm').disabled = arr.length === 0; }
   </script>
 </body>
