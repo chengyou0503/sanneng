@@ -96,38 +96,40 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzqRhW3kuKKav4L6AOI9qJZmyHDQPkUMSTwOeGMTWDwoYfdEmRNUl_6GKZNqRa_jBclbg/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz4HCROEknFZtVfj2P7RZKEl4E-dmhHAD27AoR89TJIQsFyqxsYybONflXTevPXq1hJqg/exec';
     
     let lineUser = {};
     const pending = {};
     let allCategories = [];
     
-    function jsonp(url) {
-      return new Promise((resolve, reject) => {
-        const cb = 'cb_' + Date.now() + Math.random().toString(36).substr(2);
-        window[cb] = data => {
-          try { delete window[cb]; document.getElementById(cb).remove(); } catch (e) {}
-          if (data.error || data.success === false) {
-            reject(data.error || { message: 'Unknown error from API.' });
-          } else {
-            resolve(data);
-          }
-        };
-        const script = document.createElement('script');
-        script.id = cb;
-        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
-        script.onerror = () => {
-          try { delete window[cb]; script.remove(); } catch (e) {}
-          reject({ message: 'Script error: 無法連接到 API 伺服器。' });
-        };
-        document.body.appendChild(script);
-      });
+    async function apiFetch(method, params) {
+      let url = API_URL;
+      const options = {
+        method: method,
+        redirect: 'follow'
+      };
+
+      if (method.toUpperCase() === 'GET') {
+        url += '?' + (new URLSearchParams(params)).toString();
+      } else {
+        options.body = JSON.stringify(params);
+        // GAS doPost requires a plain text content type
+        options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+      }
+      
+      const response = await fetch(url, options);
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        throw (result.error || new Error(`API request failed with status ${response.status}`));
+      }
+      return result;
     }
 
     async function initializeOrderPage() {
       document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
       try {
-        const data = await jsonp(`${API_URL}?action=getInitialData`);
+        const data = await apiFetch('GET', { action: 'getInitialData' });
         allCategories = data.categories || [];
         
         const categorySelect = document.getElementById('category');
@@ -162,7 +164,7 @@
         const userData = sessionStorage.getItem('lineUser');
         if (userData) {
           storedUser = JSON.parse(userData);
-          sessionStorage.removeItem('lineUser');
+          sessionStorage.removeItem('lineUser'); // 用完就刪掉，避免下次訪問時誤判
         }
       } catch(e) {
         console.error('Failed to parse user data from sessionStorage', e);
@@ -182,7 +184,7 @@
       } else {
         document.getElementById('loadingText').textContent = '正在取得 LINE 登入連結...';
         try {
-          const data = await jsonp(`${API_URL}?action=getLineLoginUrl`);
+          const data = await apiFetch('GET', { action: 'getLineLoginUrl' });
           window.location.href = data.url;
         } catch (err) {
           displayError(err, '無法取得 LINE 登入連結');
@@ -192,11 +194,11 @@
       document.getElementById('category').addEventListener('change', () => { const cat = document.getElementById('category').value; if (cat) loadItems(cat); });
       document.getElementById('orderForm').addEventListener('submit', e => { e.preventDefault(); const arr = Object.values(pending); if (!arr.length) { alert('請至少選擇一個品項！'); } else { showConfirmModal(arr); } });
       document.querySelector('.btn-cancel').addEventListener('click', () => { document.getElementById('confirmModal').classList.remove('active'); });
-      document.querySelector('.btn-confirm').addEventListener('click', async () => { const arr = Object.values(pending); const btn = document.querySelector('.btn-confirm'); btn.disabled = true; btn.textContent = '送出中…'; try { const params = new URLSearchParams({ action: 'submitOrder', name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(), remarks: document.getElementById('remarks').value.trim(), orders: JSON.stringify(arr), lineUserId: lineUser.userId }); const res = await jsonp(`${API_URL}?${params.toString()}`); alert(`感謝您的訂單！\n訂單總金額：${res.total} 元`); document.getElementById('orderForm').reset(); document.getElementById('name').value = lineUser.customerName || lineUser.displayName; document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>'; document.getElementById('currentCategory').textContent = ''; document.getElementById('category').value = ''; for (let k in pending) delete pending[k]; } catch (err) { console.error('送出訂單失敗:', err); alert(`送出失敗：${err.message}`); } finally { btn.textContent = '確認送出'; btn.disabled = false; document.getElementById('confirmModal').classList.remove('active'); } });
+      document.querySelector('.btn-confirm').addEventListener('click', async () => { const arr = Object.values(pending); const btn = document.querySelector('.btn-confirm'); btn.disabled = true; btn.textContent = '送出中…'; try { const res = await apiFetch('POST', { action: 'submitOrder', name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(), remarks: document.getElementById('remarks').value.trim(), orders: arr, lineUserId: lineUser.userId }); alert(`感謝您的訂單！\n訂單總金額：${res.total} 元`); document.getElementById('orderForm').reset(); document.getElementById('name').value = lineUser.customerName || lineUser.displayName; document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>'; document.getElementById('currentCategory').textContent = ''; document.getElementById('category').value = ''; for (let k in pending) delete pending[k]; } catch (err) { console.error('送出訂單失敗:', err); alert(`送出失敗：${err.message}`); } finally { btn.textContent = '確認送出'; btn.disabled = false; document.getElementById('confirmModal').classList.remove('active'); } });
       document.getElementById('confirmList').addEventListener('click', e => { if (e.target && e.target.classList.contains('remove-btn')) { const itemName = e.target.dataset.itemName; if (!itemName) return; delete pending[itemName]; const mainItemCheckbox = document.querySelector(`.item-option input[type="checkbox"][value="${itemName}"]`); if (mainItemCheckbox) { mainItemCheckbox.closest('.item-option').querySelector('input[type="checkbox"]').checked = false; mainItemCheckbox.closest('.item-option').querySelector('input[type="number"]').value = 0; } showConfirmModal(Object.values(pending)); } });
     });
     
-    async function loadItems(cat) { const container = document.getElementById('itemsContainer'); const current = document.getElementById('currentCategory'); current.textContent = `當前類別：${cat}`; container.innerHTML = '<div class="loading">品項載入中…</div>'; try { const data = await jsonp(`${API_URL}?action=getItemsByCategory&cat=${encodeURIComponent(cat)}`); container.innerHTML = ''; if(!data || data.length === 0) { container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>'; return; } data.forEach(o => { const div = document.createElement('div'); div.className = 'item-option'; const exist = pending[o.item] || { qty: 0 }; const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`; const unitText = o.unit ? ` / ${o.unit}` : ''; div.innerHTML = ` <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}"> <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div> <div class="qty-control"> <button type="button" class="qty-minus">−</button> <input type="number" min="0" value="${exist.qty}"> <button type="button" class="qty-plus">＋</button> </div> `; const cb = div.querySelector('input[type="checkbox"]'); const qtyIn = div.querySelector('input[type="number"]'); const btnM = div.querySelector('.qty-minus'); const btnP = div.querySelector('.qty-plus'); function update(v) { v = Math.max(0, parseInt(v, 10) || 0); qtyIn.value = v; cb.checked = v > 0; if (v > 0) { pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v }; } else { delete pending[o.item]; } } btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1)); btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1)); qtyIn.addEventListener('input', () => update(qtyIn.value)); cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); }); div.addEventListener('click', e => { if ([btnM, btnP, qtyIn, cb].includes(e.target)) return; update(cb.checked ? 0 : 1); }); container.appendChild(div); }); } catch (err) { console.error('載入品項失敗:', err); alert(`載入品項失敗：${err.message}`); container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>'; } }
+    async function loadItems(cat) { const container = document.getElementById('itemsContainer'); const current = document.getElementById('currentCategory'); current.textContent = `當前類別：${cat}`; container.innerHTML = '<div class="loading">品項載入中…</div>'; try { const data = await apiFetch('GET', { action: 'getItemsByCategory', cat: encodeURIComponent(cat) }); container.innerHTML = ''; if(!data || data.length === 0) { container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>'; return; } data.forEach(o => { const div = document.createElement('div'); div.className = 'item-option'; const exist = pending[o.item] || { qty: 0 }; const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`; const unitText = o.unit ? ` / ${o.unit}` : ''; div.innerHTML = ` <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}"> <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div> <div class="qty-control"> <button type="button" class="qty-minus">−</button> <input type="number" min="0" value="${exist.qty}"> <button type="button" class="qty-plus">＋</button> </div> `; const cb = div.querySelector('input[type="checkbox"]'); const qtyIn = div.querySelector('input[type="number"]'); const btnM = div.querySelector('.qty-minus'); const btnP = div.querySelector('.qty-plus'); function update(v) { v = Math.max(0, parseInt(v, 10) || 0); qtyIn.value = v; cb.checked = v > 0; if (v > 0) { pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v }; } else { delete pending[o.item]; } } btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1)); btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1)); qtyIn.addEventListener('input', () => update(qtyIn.value)); cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); }); div.addEventListener('click', e => { if ([btnM, btnP, qtyIn, cb].includes(e.target)) return; update(cb.checked ? 0 : 1); }); container.appendChild(div); }); } catch (err) { console.error('載入品項失敗:', err); alert(`載入品項失敗：${err.message}`); container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>'; } }
     function showConfirmModal(arr) { const list = document.getElementById('confirmList'); list.innerHTML = ''; if (arr.length > 0) { arr.forEach(o => { const priceInfo = ` (NT$ ${o.price})`; const unitText = o.unit ? ` / ${o.unit}` : ''; const row = document.createElement('div'); row.className = 'confirm-item'; row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span><button class="remove-btn" data-item-name="${o.item}">🗑️</button>`; list.appendChild(row); }); } else { list.innerHTML = '<div>您的訂單是空的。</div>'; } document.getElementById('confirmModal').classList.add('active'); document.querySelector('.btn-confirm').disabled = arr.length === 0; }
   </script>
 </body>
