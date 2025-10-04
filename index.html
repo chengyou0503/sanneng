@@ -12,7 +12,7 @@
     body { display: flex; justify-content: center; align-items: center; padding: var(--gap); }
     .loading-card { text-align: center; color: #666; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 1rem; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } */
     .error-message { color: #d9534f; margin-top: 1rem; text-align: left; background: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; max-width: 600px; }
     .order-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; display: none; flex-direction: column; padding: var(--gap); max-height: 100%; }
     .logo { display: block; margin: 0 auto var(--gap); max-width: 250px; }
@@ -96,7 +96,7 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz4HCROEknFZtVfj2P7RZKEl4E-dmhHAD27AoR89TJIQsFyqxsYybONflXTevPXq1hJqg/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyUV6satH8ZZclsCcamNs9PhMe-I_gV1mUPfERbyEJ3dPrWARh2AnFc3tMUnreZZ_LX-A/exec';
     
     let lineUser = {};
     const pending = {};
