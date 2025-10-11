@@ -144,7 +144,7 @@
 
 <script>
 // 【重要】請將這裡換成您重新部署後的 Google Apps Script 網址！
-const API_URL = 'https://script.google.com/macros/s/AKfycbx6DfhRkyp4Uuv3sOOTKo6RAfVR6ahJm1gOK_ngWUyZjejZKFLurZO9m_JfNX25TGmv_A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbx36whd4XGRb-xfnIHVEGpMPbYxsjEFd-6hzVw_nEddDWlNycjl8F45vOL1iXf_CUiTyA/exec';
 
 let lineUser = {};
 const pending = {};
@@ -195,7 +195,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('lineLoginBtn').addEventListener('click', async () => {
             try {
                 document.getElementById('loginStatus').textContent = '正在準備登入頁面...';
-                const data = await apiFetch('GET', { action: 'getLineLoginUrl' });
+                // 【修改】將請求從 GET 改為 POST
+                const data = await apiFetch('POST', { action: 'getLineLoginUrl' });
                 window.location.href = data.url;
             } catch (err) {
                 alert(`無法取得 LINE 登入連結：${err.message}`);
