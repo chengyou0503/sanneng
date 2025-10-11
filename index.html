@@ -4,202 +4,390 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>三能國際 線上訂購</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
   <style>
-    :root { --primary: #007bff; --primary-hover: #0056b3; --bg: #f9fafb; --card-bg: #ffffff; --radius: 0.5rem; --gap: 1rem; --transition: 0.3s; }
+    :root {
+      --primary-color: #007bff; --primary-hover: #0056b3; --background-color: #f8f9fa;
+      --card-background: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b;
+      --border-color: #e2e8f0; --danger-color: #ef4444; --line-green: #06C755;
+      --font-family: 'Noto Sans TC', sans-serif;
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+      --radius: 0.5rem; --gap: 1.25rem; --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); font-family: 'Noto Sans TC', sans-serif; }
-    body { display: flex; justify-content: center; align-items: center; padding: var(--gap); }
-    .loading-card { text-align: center; color: #666; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 1rem; }
-    /* @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } */
-    .error-message { color: #d9534f; margin-top: 1rem; text-align: left; background: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; max-width: 600px; }
-    .order-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 800px; display: none; flex-direction: column; padding: var(--gap); max-height: 100%; }
-    .logo { display: block; margin: 0 auto var(--gap); max-width: 250px; }
-    .order-card h2 { text-align: center; color: var(--primary); font-size: 1.5rem; margin-bottom: var(--gap); font-weight: 700; }
-    .announcement-box { background-color: #fffbe6; border: 1px solid #ffe58f; border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: var(--gap); font-size: 0.95rem; color: #8a6d3b; }
-    .announcement-box p { margin: 0.25rem 0; }
-    form { flex: 1; display: flex; flex-direction: column; gap: var(--gap); overflow-y: auto; }
-    label { font-size: 1rem; font-weight: 500; }
-    input, select, textarea { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: var(--radius); transition: border-color var(--transition), box-shadow var(--transition); font-family: 'Noto Sans TC', sans-serif;}
-    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,123,255,0.2); outline: none; }
-    textarea { resize: vertical; min-height: 60px; }
-    #currentCategory { font-size: 1rem; color: #374151; margin-bottom: 0.5rem; min-height: 1.2em; font-weight: bold; }
-    #itemsContainer { display: flex; flex-wrap: wrap; gap: var(--gap); }
-    .info-message, .loading { font-size: 1rem; color: #6b7280; padding: 1rem; text-align: center; width: 100%; }
-    .item-option { background: #fff; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; padding: 0.75rem; flex: 1 1 calc(50% - var(--gap)); transition: box-shadow var(--transition); cursor: pointer; }
-    .item-option:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    @media (max-width: 900px) { .item-option { flex: 1 1 calc(50% - var(--gap)); } }
-    @media (max-width: 600px) { .item-option { flex-basis: 100%; } }
-    .item-label { font-size: 1.1rem; }
-    .item-unit { font-size: 0.9rem; color: #6b7280; margin-left: 0.5rem; }
-    .item-price { font-size: 0.9rem; color: var(--primary); font-weight: 700; }
-    .qty-control { display: flex; align-items: center; }
-    .qty-control input { width: 50px; text-align: center; border: 1px solid #d1d5db; border-radius: var(--radius); margin: 0 0.25rem; padding: 0.25rem; }
-    .qty-control button { background: #e5e7eb; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: background-color var(--transition); }
-    .qty-control button:hover { background: #d1d5db; }
-    .submit-btn { background: var(--primary); color: #fff; border: none; padding: 0.8rem; font-size: 1.1rem; border-radius: var(--radius); cursor: pointer; transition: background-color var(--transition); }
+    html { font-family: var(--font-family); color: var(--text-primary); }
+    body { background-color: var(--background-color); line-height: 1.6; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: var(--gap); }
+    img { max-width: 100%; display: block; }
+    button, input, textarea { font-family: inherit; font-size: 1rem; }
+    .login-card { text-align: center; padding: 2.5rem; background: var(--card-background); border-radius: var(--radius); box-shadow: var(--shadow-lg); max-width: 420px; width: 100%; animation: fadeIn 0.8s var(--transition) forwards; }
+    .login-card .logo { max-width: 180px; margin: 0 auto 1.5rem; }
+    .login-card h2 { font-size: 1.9rem; margin-bottom: 0.25rem; }
+    .login-card .subtitle { font-size: 1.25rem; color: var(--primary-color); font-weight: 500; margin-bottom: 3rem; }
+    #lineLoginBtn { background: var(--line-green); color: white; border: none; padding: 1rem 1.5rem; font-size: 1.2rem; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font-weight: 700; transition: var(--transition); box-shadow: 0 4px 20px rgba(6, 199, 85, 0.3); width: 100%; }
+    #lineLoginBtn:hover { background: #05a546; transform: translateY(-3px); }
+    #loginStatus { margin-top: 1.5rem; color: var(--text-secondary); min-height: 1.2em; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .container { width: 100%; max-width: 1024px; margin: 0 auto; }
+    .order-card { background: var(--card-background); border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; display: none; flex-direction: column; padding: calc(var(--gap) * 1.5); border: 1px solid var(--border-color); height: calc(100vh - 2 * var(--gap)); max-height: 900px; }
+    .order-card .logo { display: block; margin: 0 auto var(--gap); max-width: 150px; flex-shrink: 0; }
+    .order-card h2 { text-align: center; color: var(--text-primary); font-size: 1.75rem; margin-bottom: var(--gap); font-weight: 700; flex-shrink: 0; }
+    form { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
+    .form-header, .form-footer { flex-shrink: 0; }
+    .form-body { flex-grow: 1; overflow-y: auto; padding: 0.5rem; margin: 0 -0.5rem; }
+    .form-group { margin-bottom: var(--gap); }
+    .form-footer { margin-top: auto; padding-top: var(--gap); border-top: 1px solid var(--border-color); }
+    label { font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem; display: block; }
+    input[type="text"], input[type="tel"], textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius); transition: var(--transition); background-color: #f8fafc; }
+    input[type="text"]:focus, input[type="tel"]:focus, textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); outline: none; background-color: white; }
+    #categoryContainer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; }
+    .category-btn { padding: 0.6rem 1.2rem; border: 1px solid var(--border-color); border-radius: 2rem; background-color: var(--card-background); color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: var(--transition); }
+    .category-btn:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
+    .category-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: 700; }
+    #itemsContainer { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--gap); padding: 1rem 0; }
+    .item-option { background: var(--card-background); border-radius: var(--radius); box-shadow: var(--shadow-md); display: flex; flex-direction: column; transition: var(--transition); overflow: hidden; border: 1px solid var(--border-color); }
+    .item-option:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+    .item-image-container { width: 100%; padding-top: 100%; position: relative; background-color: #f1f5f9; }
+    .item-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .item-details { display: flex; flex-direction: column; flex-grow: 1; padding: 1rem; }
+    .item-info { flex-grow: 1; margin-bottom: 1rem; }
+    .item-label { font-size: 1rem; font-weight: 500; line-height: 1.4; color: var(--text-primary); }
+    .item-price { font-size: 1rem; color: var(--primary-color); font-weight: 700; display: block; margin-top: 0.5rem; }
+    .qty-control { display: flex; align-items: center; justify-content: space-between; }
+    .qty-control input[type="number"] { width: 50px; text-align: center; font-size: 1rem; font-weight: 700; border: none; background: transparent; pointer-events: none; }
+    .qty-control button { background: var(--border-color); color: var(--text-secondary); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.5rem; font-weight: 400; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; line-height: 1; }
+    .qty-control button:hover { background: var(--primary-color); color: white; }
+    .submit-btn { background: var(--primary-color); color: white; border: none; width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 700; border-radius: var(--radius); cursor: pointer; transition: var(--transition); }
     .submit-btn:hover { background: var(--primary-hover); }
-    .submit-btn:disabled { background: #a5d8ff; cursor: not-allowed; }
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+    .info-message { font-size: 1rem; color: var(--text-secondary); padding: 2rem; text-align: center; width: 100%; grid-column: 1 / -1; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); animation: fadeIn 0.3s ease; }
     .modal.active { display: flex; justify-content: center; align-items: center; }
-    .modal-content { background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: var(--radius); }
-    .modal-header { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; }
-    .modal-body { max-height: 60vh; overflow-y: auto; }
-    .confirm-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
-    .remove-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
-    .modal-footer { margin-top: 1rem; text-align: right; }
-    .modal-footer button { padding: 0.6rem 1.2rem; border-radius: var(--radius); border: none; cursor: pointer; }
-    .btn-cancel { background-color: #d1d5db; }
-    .btn-confirm { background-color: var(--primary); color: white; }
+    .modal-content { background-color: var(--card-background); margin: auto; padding: var(--gap); width: 90%; max-width: 600px; border-radius: var(--radius); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+    .modal-header { font-size: 1.5rem; font-weight: 700; margin-bottom: var(--gap); padding-bottom: var(--gap); border-bottom: 1px solid var(--border-color); }
+    .modal-body { max-height: 50vh; overflow-y: auto; padding-right: 10px; }
+    .confirm-item { display: grid; grid-template-columns: 64px 1fr auto auto; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+    .confirm-item:last-child { border-bottom: none; }
+    .confirm-item__img { width: 64px; height: 64px; object-fit: cover; border-radius: 0.5rem; }
+    .confirm-item__info { display: flex; flex-direction: column; }
+    .confirm-item__name { font-weight: 500; }
+    .confirm-item__price { font-size: 0.9rem; color: var(--text-secondary); margin-top: 4px; }
+    .confirm-item__qty { font-size: 1rem; text-align: right; }
+    .remove-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary); transition: var(--transition); padding: 0.5rem; }
+    .remove-btn:hover { color: var(--danger-color); }
+    .modal-summary { padding-top: var(--gap); margin-top: var(--gap); border-top: 1px solid var(--border-color); }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; font-size: 1rem; }
+    .summary-row.total { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
+    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-footer button { padding: 0.75rem 1.5rem; border-radius: var(--radius); border: none; cursor: pointer; font-weight: 700; font-size: 1rem; }
+    .btn-cancel { background-color: #f1f5f9; }
+    .btn-confirm { background-color: var(--primary-color); color: white; }
+    @media (max-width: 768px) { body { padding: 0; } .container { padding: 0; } .order-card { border-radius: 0; border: none; box-shadow: none; height: 100vh; padding: var(--gap); } #itemsContainer { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
   </style>
 </head>
 <body>
 
-  <div id="loadingView" class="loading-card">
-    <div id="spinner" class="spinner"></div>
-    <p id="loadingText">正在處理登入資訊...</p>
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-  </div>
+<div id="loginView" class="login-card">
+    <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="Logo" class="logo"/>
+    <h2>三能國際企業有限公司</h2>
+    <p class="subtitle">線上訂購系統</p>
+    <button id="lineLoginBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:28px; height:28px;"><path d="M21.903,12.373c0-1.813-1.467-3.28-3.28-3.28h-1.82v5.47h1.82C20.436,14.563,21.903,13.097,21.903,12.373z M14.483,12.373c0-1.813-1.467-3.28-3.28-3.28H2.1v5.47h9.103C13.016,14.563,14.483,13.097,14.483,12.373z M10.863,10.903H7.243v2.94h3.62V10.903z M6.043,10.903H4.423v2.94h1.62V10.903z"></path></svg>
+      <span>使用 LINE 登入</span>
+    </button>
+    <p id="loginStatus"></p>
+</div>
 
-  <div id="orderView" class="order-card">
-    <img src="logo.png" alt="Logo" class="logo"/>
-    <h2>三能國際 線上訂購</h2>
-    <div class="announcement-box">
-      <p><strong>注意：</strong>每日訂單截止時間為15：00，15：00後為隔日訂單。</p>
-      <p>指定到貨時間或有特殊事項要告知，請善用備註欄喔!</p>
-    </div>
-    <form id="orderForm">
-      <label>訂購人/店家名稱</label>
-      <input id="name" required placeholder="資料載入中..."/>
-      <label>電話 (選填)</label>
-      <input id="phone" placeholder="請輸入聯絡電話"/>
-      <label>選擇類別</label>
-      <select id="category" disabled><option disabled selected value="">請先載入資料</option></select>
-      <label for="remarks">備註 (選填)</label>
-      <textarea id="remarks" placeholder="指定到貨時間或特殊事項請填寫於此"></textarea>
-      <div id="currentCategory"></div>
-      <div id="itemsContainer"><div class="info-message">資料載入中...</div></div>
-      <button id="btn" class="submit-btn" type="submit">送出訂單</button>
-    </form>
-  </div>
-
-  <div id="confirmModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">請確認您的訂單</div>
-      <div class="modal-body" id="confirmList"></div>
-      <div class="modal-footer">
-        <button class="btn-cancel">取消</button>
-        <button class="btn-confirm">確認送出</button>
+<div id="orderView" class="container order-card">
+  <img src="logo.png" alt="Logo" class="logo"/>
+  <h2>線上訂購</h2>
+  <form id="orderForm">
+    <div class="form-header">
+      <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label for="name">訂購人/店家名稱</label>
+          <input id="name" type="text" required placeholder="資料載入中..." />
+        </div>
+        <div>
+          <label for="phone">聯絡電話 (選填)</label>
+          <input id="phone" type="tel" placeholder="請填寫您的聯絡電話" />
+        </div>
       </div>
     </div>
-  </div>
+    <div class="form-body">
+      <div class="form-group">
+        <label>商品系列</label>
+        <div id="categoryContainer"><div class="info-message">載入中...</div></div>
+      </div>
+      <div id="itemsContainer"><div class="info-message">請先選擇一個商品系列</div></div>
+       <div class="form-group">
+            <label for="remarks">訂單備註 (選填)</label>
+            <textarea id="remarks" placeholder="如有特殊需求或指定到貨時間，請填寫於此"></textarea>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button id="submitBtn" class="submit-btn" type="submit">預覽訂單</button>
+    </div>
+  </form>
+</div>
 
-  <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbztjxHFjIOzGSXdKVMNDSfnxW8v64hiB7rRR3nPNb6TAWrbTCBpJPoPKsjlZyUvymmidg/exec';
-    
-    let lineUser = {};
-    const pending = {};
-    let allCategories = [];
-    
-    async function apiFetch(method, params) {
-      let url = API_URL;
-      const options = {
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">訂單預覽</div>
+      <div class="modal-body" id="confirmList"></div>
+      <div class="modal-summary" id="summaryContainer"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel">返回修改</button>
+        <button type="button" class="btn-confirm">確認送出</button>
+      </div>
+    </div>
+</div>
+
+<script>
+// 【重要】請將這裡換成您重新部署後的 Google Apps Script 網址！
+const API_URL = 'https://script.google.com/macros/s/AKfycbx6DfhRkyp4Uuv3sOOTKo6RAfVR6ahJm1gOK_ngWUyZjejZKFLurZO9m_JfNX25TGmv_A/exec';
+
+let lineUser = {};
+const pending = {};
+let allCategories = [];
+
+async function apiFetch(method, params) {
+    const isGet = method.toUpperCase() === 'GET';
+    const url = isGet ? `${API_URL}?${new URLSearchParams(params)}` : API_URL;
+    const options = {
         method: method,
-        redirect: 'follow'
-      };
-
-      if (method.toUpperCase() === 'GET') {
-        url += '?' + (new URLSearchParams(params)).toString();
-      } else {
+        mode: 'cors',
+    };
+    if (!isGet) {
+        options.headers = { 'Content-Type': 'application/json' };
         options.body = JSON.stringify(params);
-        // GAS doPost requires a plain text content type
-        options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
-      }
-      
-      const response = await fetch(url, options);
-      const result = await response.json();
+    }
+    const response = await fetch(url, options);
+    const result = await response.json();
+    if (!response.ok || result.error) {
+        throw new Error(result.error || `API 請求失敗，狀態碼: ${response.status}`);
+    }
+    return result;
+}
 
-      if (!response.ok || result.error) {
-        throw (result.error || new Error(`API request failed with status ${response.status}`));
-      }
-      return result;
+document.addEventListener('DOMContentLoaded', async () => {
+    const loginView = document.getElementById('loginView');
+    const orderView = document.getElementById('orderView');
+
+    if (window.location.hash.startsWith('#userData=')) {
+        try {
+            const userDataStr = decodeURIComponent(window.location.hash.substring('#userData='.length));
+            const userFromRedirect = JSON.parse(userDataStr);
+            sessionStorage.setItem('lineUser', JSON.stringify(userFromRedirect));
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch (e) { console.error('解析登入回傳資料失敗', e); }
     }
 
-    async function initializeOrderPage() {
-      document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
-      try {
-        const data = await apiFetch('GET', { action: 'getInitialData' });
-        allCategories = data.categories || [];
-        
-        const categorySelect = document.getElementById('category');
-        categorySelect.disabled = false;
-        categorySelect.innerHTML = '<option disabled selected value="">請選擇類別</option>' +
-          allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
-        
-        document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>';
-      } catch (err) {
-        displayError(err, '系統初始化失敗');
-        alert('系統初始化失敗，請重新整理頁面。');
-      }
-    }
+    const userFromSession = sessionStorage.getItem('lineUser');
 
-    function displayError(err, prefix = '系統發生錯誤') {
-      console.error(prefix, err);
-      const errorMessage = document.getElementById('errorMessage');
-      document.getElementById('spinner').style.display = 'none';
-      document.getElementById('loadingText').textContent = '載入失敗';
-      errorMessage.textContent = `${prefix}：\n${err.message || '未知錯誤'}`;
-      errorMessage.style.display = 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      const loadingView = document.getElementById('loadingView');
-      const orderView = document.getElementById('orderView');
-      const params = new URLSearchParams(window.location.search);
-      const errorFromRedirect = params.get('error');
-
-      let storedUser = null;
-      try {
-        const userData = sessionStorage.getItem('lineUser');
-        if (userData) {
-          storedUser = JSON.parse(userData);
-          sessionStorage.removeItem('lineUser'); // 用完就刪掉，避免下次訪問時誤判
-        }
-      } catch(e) {
-        console.error('Failed to parse user data from sessionStorage', e);
-      }
-      
-      if (errorFromRedirect) {
-        displayError({ message: decodeURIComponent(errorFromRedirect) }, 'LINE 登入失敗');
-        return;
-      }
-      
-      if (storedUser && storedUser.userId) {
-        lineUser = storedUser;
-        window.history.replaceState({}, document.title, window.location.pathname);
-        loadingView.style.display = 'none';
+    if (userFromSession) {
+        lineUser = JSON.parse(userFromSession);
+        loginView.style.display = 'none';
         orderView.style.display = 'flex';
         await initializeOrderPage();
-      } else {
-        document.getElementById('loadingText').textContent = '正在取得 LINE 登入連結...';
-        try {
-          const data = await apiFetch('GET', { action: 'getLineLoginUrl' });
-          window.location.href = data.url;
-        } catch (err) {
-          displayError(err, '無法取得 LINE 登入連結');
-        }
-      }
-      
-      document.getElementById('category').addEventListener('change', () => { const cat = document.getElementById('category').value; if (cat) loadItems(cat); });
-      document.getElementById('orderForm').addEventListener('submit', e => { e.preventDefault(); const arr = Object.values(pending); if (!arr.length) { alert('請至少選擇一個品項！'); } else { showConfirmModal(arr); } });
-      document.querySelector('.btn-cancel').addEventListener('click', () => { document.getElementById('confirmModal').classList.remove('active'); });
-      document.querySelector('.btn-confirm').addEventListener('click', async () => { const arr = Object.values(pending); const btn = document.querySelector('.btn-confirm'); btn.disabled = true; btn.textContent = '送出中…'; try { const res = await apiFetch('POST', { action: 'submitOrder', name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(), remarks: document.getElementById('remarks').value.trim(), orders: arr, lineUserId: lineUser.userId }); alert(`感謝您的訂單！\n訂單總金額：${res.total} 元`); document.getElementById('orderForm').reset(); document.getElementById('name').value = lineUser.customerName || lineUser.displayName; document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品類別</div>'; document.getElementById('currentCategory').textContent = ''; document.getElementById('category').value = ''; for (let k in pending) delete pending[k]; } catch (err) { console.error('送出訂單失敗:', err); alert(`送出失敗：${err.message}`); } finally { btn.textContent = '確認送出'; btn.disabled = false; document.getElementById('confirmModal').classList.remove('active'); } });
-      document.getElementById('confirmList').addEventListener('click', e => { if (e.target && e.target.classList.contains('remove-btn')) { const itemName = e.target.dataset.itemName; if (!itemName) return; delete pending[itemName]; const mainItemCheckbox = document.querySelector(`.item-option input[type="checkbox"][value="${itemName}"]`); if (mainItemCheckbox) { mainItemCheckbox.closest('.item-option').querySelector('input[type="checkbox"]').checked = false; mainItemCheckbox.closest('.item-option').querySelector('input[type="number"]').value = 0; } showConfirmModal(Object.values(pending)); } });
+    } else {
+        loginView.style.display = 'block';
+        orderView.style.display = 'none';
+        document.getElementById('lineLoginBtn').addEventListener('click', async () => {
+            try {
+                document.getElementById('loginStatus').textContent = '正在準備登入頁面...';
+                const data = await apiFetch('GET', { action: 'getLineLoginUrl' });
+                window.location.href = data.url;
+            } catch (err) {
+                alert(`無法取得 LINE 登入連結：${err.message}`);
+                document.getElementById('loginStatus').textContent = '';
+            }
+        });
+    }
+
+    document.getElementById('categoryContainer').addEventListener('click', handleCategoryClick);
+    document.getElementById('orderForm').addEventListener('submit', handleFormSubmit);
+    document.getElementById('confirmModal').addEventListener('click', handleModalClick);
+});
+
+async function initializeOrderPage() {
+    document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
+    try {
+        const data = await apiFetch('GET', { action: 'getInitialData' });
+        allCategories = data.categories || [];
+        renderCategories();
+    } catch (err) {
+        alert(`系統初始化失敗：${err.message}`);
+    }
+}
+
+function renderCategories() {
+    const container = document.getElementById('categoryContainer');
+    container.innerHTML = '';
+    if (allCategories.length === 0) {
+        container.innerHTML = '<p class="info-message" style="padding:0;text-align:left;">目前無商品系列</p>';
+        return;
+    }
+    allCategories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'category-btn';
+        btn.textContent = cat.name;
+        btn.dataset.index = cat.index;
+        container.appendChild(btn);
     });
+    if (allCategories.length > 0) {
+        const firstBtn = container.querySelector('.category-btn');
+        firstBtn.classList.add('active');
+        loadItems(firstBtn.dataset.index);
+    }
+}
+
+async function loadItems(catIndex) {
+    const container = document.getElementById('itemsContainer');
+    container.innerHTML = '<div class="info-message">品項載入中…</div>';
+    try {
+        const data = await apiFetch('GET', { action: 'getItemsByCategory', cat: catIndex });
+        container.innerHTML = '';
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="info-message">此系列下目前沒有品項</div>';
+            return;
+        }
+        data.forEach(o => {
+            const div = document.createElement('div');
+            div.className = 'item-option';
+            const qty = pending[o.item]?.qty || 0;
+            div.innerHTML = `
+                <div class="item-image-container"><img src="${o.imageUrl || 'https://via.placeholder.com/300'}" alt="${o.item}" class="item-image" loading="lazy"></div>
+                <div class="item-details">
+                    <div class="item-info">
+                        <div class="item-label">${o.item}${o.unit ? ` / ${o.unit}` : ''}</div>
+                        <span class="item-price">NT$ ${o.price}</span>
+                    </div>
+                    <div class="qty-control">
+                        <button type="button" class="qty-minus">−</button>
+                        <input type="number" value="${qty}" readonly>
+                        <button type="button" class="qty-plus">＋</button>
+                    </div>
+                </div>`;
+            
+            const qtyInput = div.querySelector('input');
+            const updateQty = (newQty) => {
+                newQty = Math.max(0, parseInt(newQty, 10) || 0);
+                qtyInput.value = newQty;
+                if (newQty > 0) {
+                    pending[o.item] = { ...o, qty: newQty };
+                } else {
+                    delete pending[o.item];
+                }
+            };
+            
+            div.querySelector('.qty-plus').addEventListener('click', () => updateQty(Number(qtyInput.value) + 1));
+            div.querySelector('.qty-minus').addEventListener('click', () => updateQty(Number(qtyInput.value) - 1));
+            container.appendChild(div);
+        });
+    } catch (err) {
+        container.innerHTML = `<div class="info-message">載入品項失敗: ${err.message}</div>`;
+    }
+}
+
+function handleCategoryClick(e) {
+    if (e.target.matches('.category-btn')) {
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        loadItems(e.target.dataset.index);
+    }
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    if (Object.keys(pending).length === 0) {
+        alert('請至少選擇一個品項！');
+        return;
+    }
+    showConfirmModal();
+}
+
+function showConfirmModal() {
+    const orders = Object.values(pending);
+    const listContainer = document.getElementById('confirmList');
+    const summaryContainer = document.getElementById('summaryContainer');
+    listContainer.innerHTML = '';
+    summaryContainer.innerHTML = '';
     
-    async function loadItems(cat) { const container = document.getElementById('itemsContainer'); const current = document.getElementById('currentCategory'); current.textContent = `當前類別：${cat}`; container.innerHTML = '<div class="loading">品項載入中…</div>'; try { const data = await apiFetch('GET', { action: 'getItemsByCategory', cat: encodeURIComponent(cat) }); container.innerHTML = ''; if(!data || data.length === 0) { container.innerHTML = '<div class="info-message">此類別下目前沒有品項</div>'; return; } data.forEach(o => { const div = document.createElement('div'); div.className = 'item-option'; const exist = pending[o.item] || { qty: 0 }; const priceDisplay = `<br><span class="item-price">NT$ ${o.price}</span>`; const unitText = o.unit ? ` / ${o.unit}` : ''; div.innerHTML = ` <input type="checkbox" ${exist.qty > 0 ? 'checked' : ''} value="${o.item}"> <div class="item-label">${o.item}<span class="item-unit">${unitText}</span>${priceDisplay}</div> <div class="qty-control"> <button type="button" class="qty-minus">−</button> <input type="number" min="0" value="${exist.qty}"> <button type="button" class="qty-plus">＋</button> </div> `; const cb = div.querySelector('input[type="checkbox"]'); const qtyIn = div.querySelector('input[type="number"]'); const btnM = div.querySelector('.qty-minus'); const btnP = div.querySelector('.qty-plus'); function update(v) { v = Math.max(0, parseInt(v, 10) || 0); qtyIn.value = v; cb.checked = v > 0; if (v > 0) { pending[o.item] = { item: o.item, unit: o.unit, price: o.price, qty: v }; } else { delete pending[o.item]; } } btnP.addEventListener('click', () => update(qtyIn.value * 1 + 1)); btnM.addEventListener('click', () => update(qtyIn.value * 1 - 1)); qtyIn.addEventListener('input', () => update(qtyIn.value)); cb.addEventListener('click', e => { e.stopPropagation(); update(cb.checked ? 1 : 0); }); div.addEventListener('click', e => { if ([btnM, btnP, qtyIn, cb].includes(e.target)) return; update(cb.checked ? 0 : 1); }); container.appendChild(div); }); } catch (err) { console.error('載入品項失敗:', err); alert(`載入品項失敗：${err.message}`); container.innerHTML = '<div class="info-message">載入品項失敗，請稍後再試</div>'; } }
-    function showConfirmModal(arr) { const list = document.getElementById('confirmList'); list.innerHTML = ''; if (arr.length > 0) { arr.forEach(o => { const priceInfo = ` (NT$ ${o.price})`; const unitText = o.unit ? ` / ${o.unit}` : ''; const row = document.createElement('div'); row.className = 'confirm-item'; row.innerHTML = `<span>${o.item}<span class="item-unit">${unitText}</span>${priceInfo} x ${o.qty}</span><button class="remove-btn" data-item-name="${o.item}">🗑️</button>`; list.appendChild(row); }); } else { list.innerHTML = '<div>您的訂單是空的。</div>'; } document.getElementById('confirmModal').classList.add('active'); document.querySelector('.btn-confirm').disabled = arr.length === 0; }
-  </script>
+    if (orders.length > 0) {
+        let total = 0;
+        orders.forEach(o => {
+            total += (o.price || 0) * o.qty;
+            listContainer.innerHTML += `
+                <div class="confirm-item">
+                    <img src="${o.imageUrl || 'https://via.placeholder.com/150'}" alt="${o.item}" class="confirm-item__img">
+                    <div class="confirm-item__info">
+                        <span class="confirm-item__name">${o.item}</span>
+                        <span class="confirm-item__price">NT$ ${o.price}</span>
+                    </div>
+                    <span class="confirm-item__qty">x ${o.qty}</span>
+                    <button type="button" class="remove-btn" data-item-name="${o.item}">🗑️</button>
+                </div>`;
+        });
+        summaryContainer.innerHTML = `<div class="summary-row total"><span>訂單總金額</span><span>NT$ ${total}</span></div>`;
+    } else {
+        listContainer.innerHTML = '<div>您的訂單是空的。</div>';
+    }
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function handleModalClick(e) {
+    const btnConfirm = e.target.closest('.btn-confirm');
+    const btnCancel = e.target.closest('.btn-cancel');
+    const btnRemove = e.target.closest('.remove-btn');
+
+    if (btnCancel) {
+        document.getElementById('confirmModal').classList.remove('active');
+    } else if (btnRemove) {
+        const itemName = btnRemove.dataset.itemName;
+        delete pending[itemName];
+        const activeCategory = document.querySelector('.category-btn.active')?.dataset.index;
+        if (activeCategory) loadItems(activeCategory);
+        showConfirmModal();
+    } else if (btnConfirm) {
+        submitOrder(btnConfirm);
+    }
+}
+
+async function submitOrder(btn) {
+    btn.disabled = true;
+    btn.textContent = '送出中…';
+    try {
+        const payload = {
+            action: 'submitOrder',
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            remarks: document.getElementById('remarks').value.trim(),
+            orders: Object.values(pending),
+            lineUserId: lineUser.userId
+        };
+        await apiFetch('POST', payload);
+        alert('感謝您的訂單！\n訂單已送出，您稍後將會收到 LINE 確認訊息。');
+        
+        document.getElementById('orderForm').reset();
+        document.getElementById('name').value = lineUser.customerName || lineUser.displayName;
+        Object.keys(pending).forEach(key => delete pending[key]);
+        
+        const activeCategoryBtn = document.querySelector('.category-btn.active');
+        if (activeCategoryBtn) {
+            loadItems(activeCategoryBtn.dataset.index);
+        } else {
+            document.getElementById('itemsContainer').innerHTML = '<div class="info-message">請選擇商品系列</div>';
+        }
+
+    } catch (err) {
+        alert(`送出失敗：${err.message}`);
+    } finally {
+        btn.textContent = '確認送出';
+        btn.disabled = false;
+        document.getElementById('confirmModal').classList.remove('active');
+    }
+}
+</script>
 </body>
 </html>
