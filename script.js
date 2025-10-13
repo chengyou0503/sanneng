@@ -1,11 +1,14 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbywnqLEgnZQEWyU1LdrkEggS6_RPzCP2zkmWZfkrw4Yum_mdJdEDWjuEFKJJ8nWiTfe4A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbywnqLEgnZQEWyU1LdrkEggS6_RPzCP2zkmWZfkrw4Yum_mdJdEDWjuEFKJJ8nWiTfe4A/exec'; // 請確保這是你最新的部署 ID
+const LIFF_ID = '2008189875-9yQXaE81'; // 👈 【✅ 重要】請貼上你在 LINE Developers 後台取得的 LIFF ID
+
 let lineUser = {};
 const pending = {};
 let allCategories = [];
 
 // --- DOM 元素集中管理 ---
 const DOMElements = {
+    liffApp: document.getElementById('liffApp'), // 【✅ 新增】
     loginView: document.getElementById('loginView'),
     orderView: document.getElementById('orderView'),
     loadingOverlay: document.getElementById('loadingOverlay'),
@@ -60,7 +63,6 @@ function apiFetch(params) {
 
 // --- 畫面切換 ---
 function showView(viewToShow) {
-    console.log(`Switching view to: ${viewToShow}`);
     if(viewToShow === 'order') {
         DOMElements.loginView.style.display = 'none';
         DOMElements.orderView.style.display = 'flex';
@@ -69,7 +71,9 @@ function showView(viewToShow) {
         DOMElements.loginView.style.display = 'flex';
         DOMElements.orderView.style.display = 'none';
     }
-    setTimeout(() => { DOMElements.loadingOverlay.classList.add('hidden'); }, 500);
+    // 【✅ 新增】顯示 App 內容並隱藏載入動畫
+    DOMElements.liffApp.style.display = 'block';
+    setTimeout(() => { DOMElements.loadingOverlay.classList.add('hidden'); }, 300);
 }
 
 // --- 核心功能 ---
@@ -291,83 +295,64 @@ function handleModalClick(e) {
     }
 }
 
-// --- 【新版】LINE 登入處理 (已修正 loginPopup 作用域問題) ---
-async function handleLineLogin() {
-    // 【✅ 修正】將 loginPopup 宣告移到 try 的外部，確保 receiveMessage 能訪問到它
-    let loginPopup = null; 
+// --- 【✅ 全新】LIFF 登入處理 ---
 
-    try {
-        console.log('Attempting LINE login...');
-        DOMElements.loginStatus.textContent = '正在準備登入頁面...';
-        const data = await apiFetch({ action: 'getLineLoginUrl' });
-        
-        // 賦值給外層的 loginPopup 變數
-        loginPopup = window.open(data.url, 'lineLoginPopup', 'width=500,height=650,scrollbars=yes');
+/**
+ * 主初始化函式，整個 App 的進入點
+ */
+async function main() {
+  try {
+    // 1. 初始化 LIFF，帶上你的 LIFF ID
+    await liff.init({ liffId: LIFF_ID });
 
-        const receiveMessage = async (event) => {
-            // 安全性檢查：確保訊息來源是您的 Google Apps Script
-            if (event.origin !== new URL(API_URL).origin) {
-                console.warn(`忽略了來自 ${event.origin} 的訊息，來源不符。`);
-                return;
-            }
-            
-            console.log('Received message from popup:', event.data);
-
-            // 移除監聽器，避免重複觸發
-            window.removeEventListener('message', receiveMessage);
-
-            // 現在這裡可以正確地訪問到 loginPopup 並執行 .close()
-            if (loginPopup) {
-                loginPopup.close();
-            }
-
-            if (event.data && event.data.success) {
-                console.log('Login successful. User data:', event.data.userData);
-                const userFromPopup = event.data.userData;
-                sessionStorage.setItem('lineUser', JSON.stringify(userFromPopup));
-                lineUser = userFromPopup;
-                await initializeOrderPage();
-                showView('order');
-            } else {
-                const errorMessage = event.data.error || 'LINE 登入失敗，請稍後再試。';
-                console.error('Login failed:', errorMessage);
-                showToast(errorMessage, 'error');
-                DOMElements.loginStatus.textContent = '';
-            }
-        };
-
-        window.addEventListener('message', receiveMessage, false);
-
-    } catch (err) {
-        console.error('Failed to get LINE login URL:', err);
-        showToast(`無法取得 LINE 登入連結：${err.message}`, 'error');
-        DOMElements.loginStatus.textContent = '';
-        // 增加保護：如果彈出視窗已打開但過程中出錯，也嘗試關閉它
-        if (loginPopup) {
-            loginPopup.close();
-        }
+    // 2. 判斷使用者是否在 LINE App 外部瀏覽
+    if (!liff.isInClient()) {
+      // 3. 如果在外部，再檢查是否已登入
+      if (liff.isLoggedIn()) {
+        // 已登入，正常執行
+        await proceedToOrderPage();
+      } else {
+        // 未登入，顯示登入按鈕
+        showView('login');
+        DOMElements.lineLoginBtn.addEventListener('click', () => {
+          // 點擊後，導向 LINE 登入頁，完成後會再回來這個頁面
+          liff.login(); 
+        });
+      }
+    } else {
+      // 在 LINE App 內部，直接執行
+      await proceedToOrderPage();
     }
+  } catch (err) {
+    console.error('LIFF Initialization failed', err);
+    showToast(`與 LINE 連線失敗，請稍後再試。`, 'error');
+    DOMElements.loadingOverlay.innerHTML = `<p style="color:red;padding:2rem;">與 LINE 連線失敗，請重新整理頁面。</p>`;
+  }
 }
 
+/**
+ * 處理獲取個人資料並跳轉到訂單頁的邏輯
+ */
+async function proceedToOrderPage() {
+  const profile = await liff.getProfile();
+  lineUser = {
+    userId: profile.userId,
+    displayName: profile.displayName,
+    // 預設 customerName 等於 LINE 名稱，讓後續邏輯一致
+    customerName: profile.displayName 
+  };
+  
+  // 將使用者資訊存入 sessionStorage，方便重整頁面時快速載入
+  sessionStorage.setItem('lineUser', JSON.stringify(lineUser));
+
+  await initializeOrderPage();
+  showView('order');
+}
 
 // --- 初始化 ---
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM fully loaded. Initializing application...');
-    // 檢查登入狀態 (優先於舊版的回調處理)
-    const userFromSession = sessionStorage.getItem('lineUser');
-    if (userFromSession) {
-        lineUser = JSON.parse(userFromSession);
-        console.log('User session found.', lineUser);
-        await initializeOrderPage();
-        showView('order');
-    } else {
-        console.log('No user session found. Showing login view.');
-        showView('login');
-        DOMElements.lineLoginBtn.addEventListener('click', handleLineLogin);
-    }
-
-    // 綁定全域事件
-    DOMElements.categoryContainer.addEventListener('click', handleCategoryClick);
-    DOMElements.orderForm.addEventListener('submit', handleFormSubmit);
-    DOMElements.confirmModal.addEventListener('click', handleModalClick);
-});
+// 綁定全域事件
+DOMElements.categoryContainer.addEventListener('click', handleCategoryClick);
+DOMElements.orderForm.addEventListener('submit', handleFormSubmit);
+DOMElements.confirmModal.addEventListener('click', handleModalClick);
+// 當頁面載入完成後，執行 LIFF 的主函式
+document.addEventListener('DOMContentLoaded', main);
