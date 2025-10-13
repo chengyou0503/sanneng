@@ -286,23 +286,30 @@ function handleModalClick(e) {
     }
 }
 
-// --- 【新版】LINE 登入處理 ---
+// --- 【新版】LINE 登入處理 (已修正 loginPopup 作用域問題) ---
 async function handleLineLogin() {
+    // 【✅ 修正】將 loginPopup 宣告移到 try 的外部
+    let loginPopup = null; 
+
     try {
         DOMElements.loginStatus.textContent = '正在準備登入頁面...';
         const data = await apiFetch({ action: 'getLineLoginUrl' });
         
-        const loginPopup = window.open(data.url, 'lineLoginPopup', 'width=500,height=650,scrollbars=yes');
+        // 現在 loginPopup 是在外層作用域宣告的，這裡只是賦值
+        loginPopup = window.open(data.url, 'lineLoginPopup', 'width=500,height=650,scrollbars=yes');
 
         const receiveMessage = async (event) => {
             // 安全性檢查：確保訊息來源是您的 Google Apps Script
+            // 注意：這裡的 origin 檢查很重要，保留它是個好習慣
             if (event.origin !== new URL(API_URL).origin) {
+                console.warn(`忽略了來自 ${event.origin} 的訊息，來源不符。`);
                 return;
             }
 
             // 移除監聽器，避免重複觸發
             window.removeEventListener('message', receiveMessage);
 
+            // 【✅ 修正】現在這裡可以正確地訪問到 loginPopup 了！
             if (loginPopup) {
                 loginPopup.close();
             }
@@ -325,6 +332,10 @@ async function handleLineLogin() {
     } catch (err) {
         showToast(`無法取得 LINE 登入連結：${err.message}`, 'error');
         DOMElements.loginStatus.textContent = '';
+        // 如果彈出視窗已經打開但過程中出錯，也嘗試關閉它
+        if (loginPopup) {
+            loginPopup.close();
+        }
     }
 }
 
