@@ -1,5 +1,5 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbwkDstZkR02qk_6SQLusOEt4a-WDvbQ385dFgKhYTeual9qGmi__n6B4KHqTUA8zoni3w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwdIEwqIcuCUq93dIduesLiVwRwkVRiCI6IhZTRz1guyJOxqQJhJnFeUeHPvlckopUTfw/exec';
 let lineUser = {};
 const pending = {};
 let allCategories = [];
