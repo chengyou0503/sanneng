@@ -1,5 +1,5 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbxdnHNpwxobdXQOAuzaqBjMqy39372DuF3ekEZNcOJN3agPCYWsIZkQLC1cWrQRsO9Zog/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQiFEvn-CDVz3yZO3TAdH5T978UjQaj8ETRjNQCSIW_VdnriEMWX72l2dW092MwfzYLw/exec';
 let lineUser = {};
 const pending = {};
 let allCategories = [];
@@ -89,7 +89,10 @@ function renderCategories() {
         container.innerHTML = '<p class="info-message" style="padding:0;text-align:left;">目前無商品系列</p>';
         return;
     }
-    allCategories.forEach(cat => {
+    
+    const sortedCategories = [...allCategories].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+    
+    sortedCategories.forEach(cat => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'category-btn';

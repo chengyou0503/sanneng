@@ -51,7 +51,7 @@ input[type="text"]:focus, input[type="tel"]:focus, textarea:focus { border-color
 textarea { resize: vertical; min-height: 70px; }
 
 /* --- 5. 元件美化 --- */
-#categoryContainer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; }
+#categoryContainer { display: flex; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.5rem; justify-content: center; }
 .category-btn { padding: 0.6rem 1.2rem; border: 1px solid var(--border-color); border-radius: 2rem; background-color: var(--card-background); color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: var(--transition); }
 .category-btn:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
 .category-btn.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: 700; }
