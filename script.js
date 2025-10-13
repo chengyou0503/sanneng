@@ -1,5 +1,5 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbywnqLEgnZQEWyU1LdrkEggS6_RPzCP2zkmWZfkrw4Yum_mdJdEDWjuEFKJJ8nWiTfe4A/exec'; // 請確保這是你最新的部署 ID
+const API_URL = 'https://script.google.com/macros/s/AKfycbzvOth_PMX1Du_R99slATA-rAbgf2Dd6BTFBxo0ecnv3zYE5yNIEtVMY8xshD85XqMCyQ/exec'; // 請確保這是你最新的部署 ID
 const LIFF_ID = '2008189875-9yQXaE81'; // 👈 【✅ 重要】請貼上你在 LINE Developers 後台取得的 LIFF ID
 
 let lineUser = {};
