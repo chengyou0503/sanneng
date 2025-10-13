@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>三能國際 線上訂購系統</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="loginView" class="view-container">
+    <div class="login-card">
+        <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="三能國際 Logo" class="logo"/>
+        <h2>三能國際企業有限公司</h2>
+        <p class="subtitle">線上訂購系統</p>
+        <button id="lineLoginBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:28px; height:28px;"><path d="M21.903,12.373c0-1.813-1.467-3.28-3.28-3.28h-1.82v5.47h1.82C20.436,14.563,21.903,13.097,21.903,12.373z M14.483,12.373c0-1.813-1.467-3.28-3.28-3.28H2.1v5.47h9.103C13.016,14.563,14.483,13.097,14.483,12.373z M10.863,10.903H7.243v2.94h3.62V10.903z M6.043,10.903H4.423v2.94h1.62V10.903z"></path></svg>
+          <span>使用 LINE 登入</span>
+        </button>
+        <p id="loginStatus"></p>
+    </div>
+  </div>
+
+  <div id="orderView" class="view-container" style="display: none; visibility: hidden;">
+    <div class="order-container">
+        <div class="order-card">
+          <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="三能國際 Logo" class="logo"/>
+          <h2>線上訂購系統</h2>
+          <form id="orderForm">
+            <div class="form-header">
+              <div class="form-group">
+                <label for="name">訂購人/店家名稱</label>
+                <input id="name" type="text" required placeholder="請填寫訂購人名稱" />
+              </div>
+              <div class="form-group">
+                <label for="phone">聯絡電話 (選填)</label>
+                <input id="phone" type="tel" placeholder="請填寫您的聯絡電話" />
+              </div>
+            </div>
+            <div class="form-body">
+              <div class="form-group">
+                <label>商品系列</label>
+                <div id="categoryContainer"><div class="info-message">載入中...</div></div>
+              </div>
+              <div id="itemsContainer"><div class="info-message">請先選擇商品系列</div></div>
+              <div class="form-group">
+                <label for="remarks">訂單備註</label>
+                <textarea id="remarks" placeholder="如有特殊需求或指定到貨時間，請填寫於此"></textarea>
+              </div>
+            </div>
+            <div class="form-footer">
+              <button id="submitBtn" class="submit-btn" type="submit">
+                <span class="btn-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                  <span>預覽訂單</span>
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+  </div>
+  
+  <div id="loadingOverlay">
+    <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="Loading Logo" class="logo-loader"/>
+  </div>
+
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">訂單預覽</div>
+      <div class="modal-body" id="confirmList"></div>
+      <div class="modal-summary" id="summaryContainer"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel">返回修改</button>
+        <button type="button" class="btn-confirm">
+            <span class="btn-text">確認送出</span>
+            <div class="submit-animation-container">
+                <div class="spinner"></div>
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+            <span class="success-text">訂單已送出！</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+  <script src="script.js" defer></script>
+</body>
+</html>
