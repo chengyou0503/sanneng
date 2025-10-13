@@ -1,5 +1,5 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbywnqLEgnZQEWyU1LdrkEggS6_RPzCP2zkmWZfkrw4Yum_mdJdEDWjuEFKJJ8nWiTfe4A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwRui8lwFqIBRnZrk5tEEXAYWHBonJXrF-4r2vu4UJIPKiJhqZX2YR4coKdtVyBxsVzTQ/exec';
 let lineUser = {};
 const pending = {};
 let allCategories = [];
@@ -25,6 +25,7 @@ const DOMElements = {
 
 // --- UI 元件 ---
 function showToast(message, type = 'info') {
+    console.log(`Toast: [${type}] ${message}`);
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     toast.textContent = message;
@@ -59,6 +60,7 @@ function apiFetch(params) {
 
 // --- 畫面切換 ---
 function showView(viewToShow) {
+    console.log(`Switching view to: ${viewToShow}`);
     if(viewToShow === 'order') {
         DOMElements.loginView.style.display = 'none';
         DOMElements.orderView.style.display = 'flex';
@@ -72,6 +74,7 @@ function showView(viewToShow) {
 
 // --- 核心功能 ---
 async function initializeOrderPage() {
+    console.log('Initializing order page for user:', lineUser.displayName);
     DOMElements.nameInput.value = lineUser.customerName || lineUser.displayName;
     try {
         const data = await apiFetch({ action: 'getInitialData' });
@@ -215,6 +218,7 @@ async function submitOrder(btn) {
             orders: Object.values(pending),
             lineUserId: lineUser.userId
         };
+        console.log('Submitting order with payload:', payload);
         await apiFetch({ action: 'submitOrder', payload: payload });
         
         btn.classList.remove('btn--loading');
@@ -238,6 +242,7 @@ async function submitOrder(btn) {
         }, 2000);
 
     } catch (err) {
+        console.error('Order submission failed:', err);
         showToast(`送出失敗：${err.message}`, 'error');
         btn.classList.remove('btn--loading');
         btn.disabled = false;
@@ -288,33 +293,36 @@ function handleModalClick(e) {
 
 // --- 【新版】LINE 登入處理 (已修正 loginPopup 作用域問題) ---
 async function handleLineLogin() {
-    // 【✅ 修正】將 loginPopup 宣告移到 try 的外部
+    // 【✅ 修正】將 loginPopup 宣告移到 try 的外部，確保 receiveMessage 能訪問到它
     let loginPopup = null; 
 
     try {
+        console.log('Attempting LINE login...');
         DOMElements.loginStatus.textContent = '正在準備登入頁面...';
         const data = await apiFetch({ action: 'getLineLoginUrl' });
         
-        // 現在 loginPopup 是在外層作用域宣告的，這裡只是賦值
+        // 賦值給外層的 loginPopup 變數
         loginPopup = window.open(data.url, 'lineLoginPopup', 'width=500,height=650,scrollbars=yes');
 
         const receiveMessage = async (event) => {
             // 安全性檢查：確保訊息來源是您的 Google Apps Script
-            // 注意：這裡的 origin 檢查很重要，保留它是個好習慣
             if (event.origin !== new URL(API_URL).origin) {
                 console.warn(`忽略了來自 ${event.origin} 的訊息，來源不符。`);
                 return;
             }
+            
+            console.log('Received message from popup:', event.data);
 
             // 移除監聽器，避免重複觸發
             window.removeEventListener('message', receiveMessage);
 
-            // 【✅ 修正】現在這裡可以正確地訪問到 loginPopup 了！
+            // 現在這裡可以正確地訪問到 loginPopup 並執行 .close()
             if (loginPopup) {
                 loginPopup.close();
             }
 
             if (event.data && event.data.success) {
+                console.log('Login successful. User data:', event.data.userData);
                 const userFromPopup = event.data.userData;
                 sessionStorage.setItem('lineUser', JSON.stringify(userFromPopup));
                 lineUser = userFromPopup;
@@ -322,6 +330,7 @@ async function handleLineLogin() {
                 showView('order');
             } else {
                 const errorMessage = event.data.error || 'LINE 登入失敗，請稍後再試。';
+                console.error('Login failed:', errorMessage);
                 showToast(errorMessage, 'error');
                 DOMElements.loginStatus.textContent = '';
             }
@@ -330,9 +339,10 @@ async function handleLineLogin() {
         window.addEventListener('message', receiveMessage, false);
 
     } catch (err) {
+        console.error('Failed to get LINE login URL:', err);
         showToast(`無法取得 LINE 登入連結：${err.message}`, 'error');
         DOMElements.loginStatus.textContent = '';
-        // 如果彈出視窗已經打開但過程中出錯，也嘗試關閉它
+        // 增加保護：如果彈出視窗已打開但過程中出錯，也嘗試關閉它
         if (loginPopup) {
             loginPopup.close();
         }
@@ -342,13 +352,16 @@ async function handleLineLogin() {
 
 // --- 初始化 ---
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM fully loaded. Initializing application...');
     // 檢查登入狀態 (優先於舊版的回調處理)
     const userFromSession = sessionStorage.getItem('lineUser');
     if (userFromSession) {
         lineUser = JSON.parse(userFromSession);
+        console.log('User session found.', lineUser);
         await initializeOrderPage();
         showView('order');
     } else {
+        console.log('No user session found. Showing login view.');
         showView('login');
         DOMElements.lineLoginBtn.addEventListener('click', handleLineLogin);
     }
