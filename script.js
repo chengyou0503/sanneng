@@ -286,19 +286,52 @@ function handleModalClick(e) {
     }
 }
 
+// --- 【新版】LINE 登入處理 ---
+async function handleLineLogin() {
+    try {
+        DOMElements.loginStatus.textContent = '正在準備登入頁面...';
+        const data = await apiFetch({ action: 'getLineLoginUrl' });
+        
+        const loginPopup = window.open(data.url, 'lineLoginPopup', 'width=500,height=650,scrollbars=yes');
+
+        const receiveMessage = async (event) => {
+            // 安全性檢查：確保訊息來源是您的 Google Apps Script
+            if (event.origin !== new URL(API_URL).origin) {
+                return;
+            }
+
+            // 移除監聽器，避免重複觸發
+            window.removeEventListener('message', receiveMessage);
+
+            if (loginPopup) {
+                loginPopup.close();
+            }
+
+            if (event.data && event.data.success) {
+                const userFromPopup = event.data.userData;
+                sessionStorage.setItem('lineUser', JSON.stringify(userFromPopup));
+                lineUser = userFromPopup;
+                await initializeOrderPage();
+                showView('order');
+            } else {
+                const errorMessage = event.data.error || 'LINE 登入失敗，請稍後再試。';
+                showToast(errorMessage, 'error');
+                DOMElements.loginStatus.textContent = '';
+            }
+        };
+
+        window.addEventListener('message', receiveMessage, false);
+
+    } catch (err) {
+        showToast(`無法取得 LINE 登入連結：${err.message}`, 'error');
+        DOMElements.loginStatus.textContent = '';
+    }
+}
+
+
 // --- 初始化 ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // 處理 LINE 登入回調
-    if (window.location.hash.startsWith('#userData=')) {
-        try {
-            const userDataStr = decodeURIComponent(window.location.hash.substring('#userData='.length));
-            const userFromRedirect = JSON.parse(userDataStr);
-            sessionStorage.setItem('lineUser', JSON.stringify(userFromRedirect));
-            window.history.replaceState(null, '', window.location.pathname);
-        } catch (e) { console.error('解析登入回傳資料失敗', e); }
-    }
-
-    // 檢查登入狀態
+    // 檢查登入狀態 (優先於舊版的回調處理)
     const userFromSession = sessionStorage.getItem('lineUser');
     if (userFromSession) {
         lineUser = JSON.parse(userFromSession);
@@ -306,16 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showView('order');
     } else {
         showView('login');
-        DOMElements.lineLoginBtn.addEventListener('click', async () => {
-            try {
-                DOMElements.loginStatus.textContent = '正在準備登入頁面...';
-                const data = await apiFetch({ action: 'getLineLoginUrl' });
-                window.location.href = data.url;
-            } catch (err) {
-                showToast(`無法取得 LINE 登入連結：${err.message}`, 'error');
-                DOMElements.loginStatus.textContent = '';
-            }
-        });
+        DOMElements.lineLoginBtn.addEventListener('click', handleLineLogin);
     }
 
     // 綁定全域事件
