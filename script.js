@@ -1,5 +1,5 @@
 // --- 全域常數與變數 ---
-const API_URL = 'https://script.google.com/macros/s/AKfycbwax2K7WdtAjsh4S93G6GlgWsjvvguG9L5i2QXJAPsOhSPI1pQNQIGROuRRIVQkxQQyqQ/exec'; // 請確保這是你最新的部署 ID
+const API_URL = 'https://script.google.com/macros/s/AKfycbyFJhbQpCME-T5L7oPf6HMi8bU7ydzd7sipA8ofgXwQJur_-zKT1DWy4aaisY2S2T3iqw/exec'; // 請確保這是你最新的部署 ID
 const LIFF_ID = '2008189875-9yQXaE81'; // 👈 【✅ 重要】請貼上你在 LINE Developers 後台取得的 LIFF ID
 
 let lineUser = {};
@@ -8,7 +8,7 @@ let allCategories = [];
 
 // --- DOM 元素集中管理 ---
 const DOMElements = {
-    liffApp: document.getElementById('liffApp'), // 【✅ 新增】
+    liffApp: document.getElementById('liffApp'),
     loginView: document.getElementById('loginView'),
     orderView: document.getElementById('orderView'),
     loadingOverlay: document.getElementById('loadingOverlay'),
@@ -35,7 +35,7 @@ function showToast(message, type = 'info') {
     DOMElements.toastContainer.appendChild(toast);
     setTimeout(() => {
         toast.remove();
-    }, 4000); // 包含動畫時間
+    }, 4000);
 }
 
 // --- API 請求 ---
@@ -71,23 +71,34 @@ function showView(viewToShow) {
         DOMElements.loginView.style.display = 'flex';
         DOMElements.orderView.style.display = 'none';
     }
-    // 【✅ 新增】顯示 App 內容並隱藏載入動畫
     DOMElements.liffApp.style.display = 'block';
     setTimeout(() => { DOMElements.loadingOverlay.classList.add('hidden'); }, 300);
 }
 
 // --- 核心功能 ---
+// 【✅ 已修改】
 async function initializeOrderPage() {
     console.log('Initializing order page for user:', lineUser.displayName);
-    DOMElements.nameInput.value = lineUser.customerName || lineUser.displayName;
+    
     try {
-        const data = await apiFetch({ action: 'getInitialData' });
+        // 在請求初始資料時，將使用者 profile 一起傳送到後端
+        const data = await apiFetch({
+            action: 'getInitialData',
+            profile: JSON.stringify({ userId: lineUser.userId, displayName: lineUser.displayName })
+        });
+
+        // 優先使用後端 (スプレッドシート) 回傳的 customerName，若無則使用 LINE 的 displayName
+        const effectiveName = data.customerName || lineUser.displayName;
+        lineUser.customerName = effectiveName; // 更新全域變數中的名稱
+        DOMElements.nameInput.value = effectiveName; // 將最準確的名稱設定到輸入框
+        
         allCategories = data.categories || [];
         renderCategories();
     } catch (err) {
         showToast(`系統初始化失敗：${err.message}`, 'error');
     }
 }
+
 
 function renderCategories() {
     const container = DOMElements.categoryContainer;
@@ -295,32 +306,21 @@ function handleModalClick(e) {
     }
 }
 
-// --- 【✅ 全新】LIFF 登入處理 ---
-
-/**
- * 主初始化函式，整個 App 的進入點
- */
+// --- LIFF 登入處理 ---
 async function main() {
   try {
-    // 1. 初始化 LIFF，帶上你的 LIFF ID
     await liff.init({ liffId: LIFF_ID });
 
-    // 2. 判斷使用者是否在 LINE App 外部瀏覽
     if (!liff.isInClient()) {
-      // 3. 如果在外部，再檢查是否已登入
       if (liff.isLoggedIn()) {
-        // 已登入，正常執行
         await proceedToOrderPage();
       } else {
-        // 未登入，顯示登入按鈕
         showView('login');
         DOMElements.lineLoginBtn.addEventListener('click', () => {
-          // 點擊後，導向 LINE 登入頁，完成後會再回來這個頁面
           liff.login(); 
         });
       }
     } else {
-      // 在 LINE App 內部，直接執行
       await proceedToOrderPage();
     }
   } catch (err) {
@@ -330,19 +330,14 @@ async function main() {
   }
 }
 
-/**
- * 處理獲取個人資料並跳轉到訂單頁的邏輯
- */
 async function proceedToOrderPage() {
   const profile = await liff.getProfile();
   lineUser = {
     userId: profile.userId,
     displayName: profile.displayName,
-    // 預設 customerName 等於 LINE 名稱，讓後續邏輯一致
     customerName: profile.displayName 
   };
   
-  // 將使用者資訊存入 sessionStorage，方便重整頁面時快速載入
   sessionStorage.setItem('lineUser', JSON.stringify(lineUser));
 
   await initializeOrderPage();
@@ -350,9 +345,7 @@ async function proceedToOrderPage() {
 }
 
 // --- 初始化 ---
-// 綁定全域事件
 DOMElements.categoryContainer.addEventListener('click', handleCategoryClick);
 DOMElements.orderForm.addEventListener('submit', handleFormSubmit);
 DOMElements.confirmModal.addEventListener('click', handleModalClick);
-// 當頁面載入完成後，執行 LIFF 的主函式
 document.addEventListener('DOMContentLoaded', main);
