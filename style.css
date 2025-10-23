@@ -25,7 +25,6 @@ button, input, textarea { font-family: inherit; font-size: 1rem; }
 
 /* --- 3. 主要佈局 (登入 & 訂購) --- */
 .view-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; width: 100%; padding: var(--gap); }
-/* 登入頁面 */
 .login-card { text-align: center; padding: 2.5rem; background: var(--card-background); border-radius: var(--radius); box-shadow: var(--shadow-lg); max-width: 420px; width: 100%; animation: fadeIn 0.8s var(--transition) forwards; }
 .login-card .logo { max-width: 180px; margin: 0 auto 1.5rem; }
 .login-card h2 { font-size: 1.9rem; margin-bottom: 0.25rem; }
@@ -33,7 +32,6 @@ button, input, textarea { font-family: inherit; font-size: 1rem; }
 #lineLoginBtn { background: var(--line-green); color: white; border: none; padding: 1rem 1.5rem; font-size: 1.2rem; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 12px; font-weight: 700; transition: var(--transition); box-shadow: 0 4px 20px rgba(6, 199, 85, 0.3); width: 100%; }
 #lineLoginBtn:hover { background: #05a546; transform: translateY(-3px); }
 #loginStatus { margin-top: 1.5rem; color: var(--text-secondary); min-height: 1.2em; }
-/* 訂購頁面 (採用意念國際佈局) */
 .order-container { width: 100%; max-width: 1024px; margin: 0 auto; }
 .order-card { background: var(--card-background); border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; display: flex; flex-direction: column; padding: calc(var(--gap) * 1.5); border: 1px solid var(--border-color); min-height: calc(100vh - 2 * var(--gap)); }
 .order-card .logo { display: block; margin: 0 auto var(--gap); max-width: 150px; flex-shrink: 0; }
@@ -98,56 +96,16 @@ textarea { resize: vertical; min-height: 70px; }
 .modal-footer button { padding: 0.75rem 1.5rem; border-radius: var(--radius); border: none; cursor: pointer; font-weight: 700; font-size: 1rem; transition: var(--transition); }
 .btn-cancel { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
 .btn-cancel:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
-
-/* --- 6.1. 按鈕動畫 (優化版) --- */
-.btn-confirm {
-    position: relative;
-    width: 130px;
-    height: 48px;
-    background-color: var(--primary-color);
-    color: white;
-    border: 1px solid var(--primary-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.btn-confirm > span,
-.btn-confirm > div {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-}
-.btn-text, .success-text {
-    white-space: nowrap;
-}
-.submit-animation-container {
-    opacity: 0;
-    width: 24px;
-    height: 24px;
-}
-.spinner {
-    width: 100%;
-    height: 100%;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-.checkmark {
-    stroke-width: 4;
-    stroke: white;
-    stroke-dasharray: 48;
-    stroke-dashoffset: 48;
-}
-.success-text {
-    opacity: 0;
-}
+.btn-confirm { position: relative; width: 130px; height: 48px; background-color: var(--primary-color); color: white; border: 1px solid var(--primary-color); display: flex; align-items: center; justify-content: center; }
+.btn-confirm > span, .btn-confirm > div { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: opacity 0.2s ease-out, transform 0.2s ease-out; }
+.btn-text, .success-text { white-space: nowrap; }
+.submit-animation-container { opacity: 0; width: 24px; height: 24px; }
+.spinner { width: 100%; height: 100%; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+.checkmark { stroke-width: 4; stroke: white; stroke-dasharray: 48; stroke-dashoffset: 48; }
+.success-text { opacity: 0; }
 .btn-confirm.btn--loading { width: 48px; border-radius: 50%; }
 .btn-confirm.btn--loading .btn-text { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-.btn-confirm.btn--loading .submit-animation-container,
-.btn-confirm.btn--loading .spinner { opacity: 1; }
+.btn-confirm.btn--loading .submit-animation-container, .btn-confirm.btn--loading .spinner { opacity: 1; }
 .btn-confirm.btn--success { width: 180px; border-radius: var(--radius); background-color: var(--primary-color); border-color: var(--primary-color); }
 .btn-confirm.btn--success .btn-text { opacity: 0; }
 .btn-confirm.btn--success .submit-animation-container { opacity: 1; }
@@ -164,47 +122,45 @@ textarea { resize: vertical; min-height: 70px; }
 @keyframes fade-in-text { to { opacity: 1; } }
 
 /* --- 8. Toast Notifications --- */
-#toastContainer {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.75rem;
-}
-.toast {
-  background-color: var(--card-background);
-  color: var(--text-primary);
-  padding: 1rem 1.5rem;
+#toastContainer { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; }
+.toast { background-color: var(--card-background); color: var(--text-primary); padding: 1rem 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-lg); border-left: 5px solid var(--primary-color); font-weight: 500; animation: slideIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), fadeOut 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 3.5s forwards; transform: translateX(120%); max-width: 350px; }
+.toast--error { border-left-color: var(--danger-color); }
+.toast--success { border-left-color: #22c55e; }
+@keyframes slideIn { to { transform: translateX(0); } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateX(120%); } }
+
+/* --- 8.1. 【✅ 已新增】Alert Banner --- */
+.alert-banner {
+  background-color: #fffbeb; /* yellow-50 */
+  border: 1px solid #fde68a; /* yellow-200 */
   border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  border-left: 5px solid var(--primary-color);
+  padding: 1rem;
+  margin-bottom: var(--gap);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  animation: fadeIn 0.5s ease;
+}
+.alert-banner p {
+  margin: 0;
+  font-size: 0.9rem;
   font-weight: 500;
-  animation: slideIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), fadeOut 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) 3.5s forwards;
-  transform: translateX(120%);
-  max-width: 350px;
+  color: #b45309; /* amber-700 */
 }
-.toast--error {
-  border-left-color: var(--danger-color);
+.add-friend-btn {
+  background-color: var(--line-green);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 0.3s;
 }
-.toast--success {
-  border-left-color: #22c55e; /* green-500 */
-}
-@keyframes slideIn {
-  to {
-    transform: translateX(0);
-  }
-}
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: translateX(120%);
-  }
+.add-friend-btn:hover {
+  background-color: #05a546;
 }
 
 /* --- 9. RWD --- */
@@ -222,10 +178,6 @@ textarea { resize: vertical; min-height: 70px; }
   .btn-confirm { width: 100%; height: 52px; }
   .btn-confirm.btn--loading { width: 52px; }
   .btn-confirm.btn--success { width: 100%; }
-  #toastContainer {
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    align-items: stretch;
-  }
+  #toastContainer { top: 1rem; left: 1rem; right: 1rem; align-items: stretch; }
+  .alert-banner { flex-direction: column; text-align: center; gap: 0.75rem; }
 }

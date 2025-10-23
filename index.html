@@ -6,12 +6,10 @@
   <title>三能國際 線上訂購系統</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css">
-  <!-- 【✅ 新增】引入 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
-  <!-- 【✅ 修改】用一個 div 包住整個 App，便於 LIFF 初始化後顯示 -->
   <div id="liffApp" style="display: none;">
   
     <div id="loginView" class="view-container">
@@ -30,6 +28,15 @@
     <div id="orderView" class="view-container" style="display: none; visibility: hidden;">
       <div class="order-container">
           <div class="order-card">
+            
+            <!-- ▼▼▼ 【✅ 已新增】用來顯示好友提示的橫幅 ▼▼▼ -->
+            <div id="friendshipAlert" class="alert-banner" style="display: none;">
+              <p>您尚未加入官方帳號好友，加入後才能收到訂單確認通知喔！</p>
+              <!-- 連結會在 script.js 中動態生成 -->
+              <a href="#" target="_blank" class="add-friend-btn">點我加好友</a>
+            </div>
+            <!-- ▲▲▲ 【✅ 已新增】用來顯示好友提示的橫幅 ▲▲▲ -->
+
             <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="三能國際 Logo" class="logo"/>
             <h2>線上訂購系統</h2>
             <form id="orderForm">
@@ -88,11 +95,10 @@
       </div>
     </div>
 
-  </div> <!-- 【✅ 修改】這是 liffApp 的結束標籤 -->
+  </div>
 
   <div id="loadingOverlay">
     <img src="https://raw.githubusercontent.com/chengyou0503/sanneng/main/logo.png" alt="Loading Logo" class="logo-loader"/>
-    <!-- 【✅ 修改】加上更明確的載入文字 -->
     <p style="text-align:center; margin-top:1rem; color:#64748b;">正在與 LINE 連線中...</p>
   </div>
 

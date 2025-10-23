@@ -76,29 +76,22 @@ function showView(viewToShow) {
 }
 
 // --- 核心功能 ---
-// 【✅ 已修改】
 async function initializeOrderPage() {
     console.log('Initializing order page for user:', lineUser.displayName);
-    
     try {
-        // 在請求初始資料時，將使用者 profile 一起傳送到後端
         const data = await apiFetch({
             action: 'getInitialData',
             profile: JSON.stringify({ userId: lineUser.userId, displayName: lineUser.displayName })
         });
-
-        // 優先使用後端 (スプレッドシート) 回傳的 customerName，若無則使用 LINE 的 displayName
         const effectiveName = data.customerName || lineUser.displayName;
-        lineUser.customerName = effectiveName; // 更新全域變數中的名稱
-        DOMElements.nameInput.value = effectiveName; // 將最準確的名稱設定到輸入框
-        
+        lineUser.customerName = effectiveName;
+        DOMElements.nameInput.value = effectiveName;
         allCategories = data.categories || [];
         renderCategories();
     } catch (err) {
         showToast(`系統初始化失敗：${err.message}`, 'error');
     }
 }
-
 
 function renderCategories() {
     const container = DOMElements.categoryContainer;
@@ -107,9 +100,7 @@ function renderCategories() {
         container.innerHTML = '<p class="info-message" style="padding:0;text-align:left;">目前無商品系列</p>';
         return;
     }
-    
     const sortedCategories = [...allCategories].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
-    
     sortedCategories.forEach(cat => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -136,14 +127,12 @@ async function loadItems(catIndex) {
             container.innerHTML = '<div class="info-message">此系列下目前沒有品項</div>';
             return;
         }
-        
         const fragment = document.createDocumentFragment();
         items.forEach(o => {
             const itemElement = createItemElement(o);
             fragment.appendChild(itemElement);
         });
         container.appendChild(fragment);
-
     } catch (err) {
         container.innerHTML = `<div class="info-message">載入品項失敗: ${err.message}</div>`;
     }
@@ -153,7 +142,6 @@ function createItemElement(itemData) {
     const div = document.createElement('div');
     div.className = 'item-option';
     const qty = pending[itemData.item]?.qty || 0;
-
     div.innerHTML = `
         <div class="item-image-container"><img src="${itemData.imageUrl || 'https://via.placeholder.com/300?text=No+Image'}" alt="${itemData.item}" class="item-image" loading="lazy"></div>
         <div class="item-details">
@@ -167,7 +155,6 @@ function createItemElement(itemData) {
                 <button type="button" class="qty-plus">＋</button>
             </div>
         </div>`;
-
     const qtyInput = div.querySelector('input');
     const updateQty = (newQty) => {
         newQty = Math.max(0, parseInt(newQty, 10) || 0);
@@ -175,10 +162,8 @@ function createItemElement(itemData) {
         if (newQty > 0) { pending[itemData.item] = { ...itemData, qty: newQty }; } 
         else { delete pending[itemData.item]; }
     };
-
     div.querySelector('.qty-plus').addEventListener('click', () => updateQty(Number(qtyInput.value) + 1));
     div.querySelector('.qty-minus').addEventListener('click', () => updateQty(Number(qtyInput.value) - 1));
-    
     return div;
 }
 
@@ -188,7 +173,6 @@ function showConfirmModal() {
     const summaryContainer = DOMElements.summaryContainer;
     listContainer.innerHTML = '';
     summaryContainer.innerHTML = '';
-
     if (orders.length > 0) {
         let total = 0;
         const fragment = document.createDocumentFragment();
@@ -224,7 +208,6 @@ async function submitOrder(btn) {
     btn.disabled = true;
     btnCancel.disabled = true;
     btn.classList.add('btn--loading');
-    
     try {
         const payload = {
             name: DOMElements.nameInput.value.trim(),
@@ -233,31 +216,24 @@ async function submitOrder(btn) {
             orders: Object.values(pending),
             lineUserId: lineUser.userId
         };
-        console.log('Submitting order with payload:', payload);
         await apiFetch({ action: 'submitOrder', payload: payload });
-        
         btn.classList.remove('btn--loading');
         btn.classList.add('btn--success');
-        
         setTimeout(() => {
             DOMElements.confirmModal.classList.remove('active');
             DOMElements.orderForm.reset();
             DOMElements.nameInput.value = lineUser.customerName || lineUser.displayName;
             Object.keys(pending).forEach(key => delete pending[key]);
-            
             const activeCategoryBtn = DOMElements.categoryContainer.querySelector('.category-btn.active');
             if (activeCategoryBtn) loadItems(activeCategoryBtn.dataset.index);
             else DOMElements.itemsContainer.innerHTML = '<div class="info-message">請選擇商品系列</div>';
-            
             setTimeout(() => {
                 btn.classList.remove('btn--success');
                 btn.disabled = false;
                 btnCancel.disabled = false;
             }, 500);
         }, 2000);
-
     } catch (err) {
-        console.error('Order submission failed:', err);
         showToast(`送出失敗：${err.message}`, 'error');
         btn.classList.remove('btn--loading');
         btn.disabled = false;
@@ -292,7 +268,6 @@ function handleModalClick(e) {
     const btnConfirm = e.target.closest('.btn-confirm');
     const btnCancel = e.target.closest('.btn-cancel');
     const btnRemove = e.target.closest('.remove-btn');
-
     if (btnCancel) {
         DOMElements.confirmModal.classList.remove('active');
     } else if (btnRemove) {
@@ -310,7 +285,6 @@ function handleModalClick(e) {
 async function main() {
   try {
     await liff.init({ liffId: LIFF_ID });
-
     if (!liff.isInClient()) {
       if (liff.isLoggedIn()) {
         await proceedToOrderPage();
@@ -330,6 +304,7 @@ async function main() {
   }
 }
 
+// 【✅ 已修改】
 async function proceedToOrderPage() {
   const profile = await liff.getProfile();
   lineUser = {
@@ -339,6 +314,30 @@ async function proceedToOrderPage() {
   };
   
   sessionStorage.setItem('lineUser', JSON.stringify(lineUser));
+
+  // --- 檢查好友狀態 ---
+  try {
+    const friendship = await liff.getFriendship();
+    console.log('Friendship status:', friendship);
+    
+    // 如果 friendship.friendFlag 為 false，代表不是好友
+    if (!friendship.friendFlag) {
+      const alertBanner = document.getElementById('friendshipAlert');
+      
+      // ⚠️ 重要: 請將下面的 @your_oa_id 換成您官方帳號的ID
+      const officialAccountId = '@383fkkiu'; // <--- ⚠️ 請務必修改這裡
+      
+      const addFriendLink = alertBanner.querySelector('a');
+      
+      // 使用 LINE URL Scheme 引導使用者去加好友
+      addFriendLink.href = `https://line.me/R/ti/p/${officialAccountId}`;
+      
+      alertBanner.style.display = 'flex';
+    }
+  } catch (err) {
+    console.error('Failed to get friendship status:', err);
+    // 即使檢查好友狀態失敗，也讓使用者繼續訂購流程
+  }
 
   await initializeOrderPage();
   showView('order');
