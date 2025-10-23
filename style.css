@@ -244,21 +244,38 @@ textarea { resize: vertical; min-height: 70px; }
   .item-option { width: 180px; }
   .modal-content { width: 95%; margin: auto; }
   
-  /* --- ▼▼▼ 【✅ 已修改】彈窗頁腳行動版佈局 --- */
+  /* --- ▼▼▼ 【✅ 最終修正】彈窗頁腳行動版佈局 --- */
   .modal-footer {
-    /* 維持 row 方向，讓按鈕並排 */
-    flex-direction: row; 
+    flex-direction: row;
+    justify-content: space-between; /* 確保左右對齊 */
   }
-  .modal-footer button {
-    /* 讓兩個按鈕平分寬度 */
-    flex: 1; 
-    /* 移除固定的 width，改由 flex 控制 */
-  }
-  /* --- ▲▲▲ 【✅ 已修改】彈窗頁腳行動版佈局 --- */
 
-  .btn-confirm { width: auto; height: 52px; } /* 讓寬度自適應 */
-  .btn-confirm.btn--loading { width: 52px; flex: 0 0 52px; } /* 載入時固定為圓形寬度 */
-  .btn-confirm.btn--success { width: auto; } /* 成功時寬度自適應 */
+  .modal-footer button {
+    /* 核心：讓按鈕根據內容和可用空間自由伸缩 */
+    flex: 1 1 0;
+    /* 覆蓋桌面版的固定 padding，讓按鈕在小螢幕上不會太大 */
+    padding: 0.75rem 0.5rem;
+    /* 確保文字能正常置中 */
+    text-align: center;
+  }
+
+  /* 針對確認按鈕的動畫做特別的 flexbox 調整 */
+  .btn-confirm {
+    /* 覆蓋桌面版的固定 width */
+    width: auto; 
+    height: 52px;
+  }
+  .btn-confirm.btn--loading {
+    /* 載入中：不伸展、不壓縮，固定寬度 */
+    flex: 0 0 52px; 
+    width: 52px;
+  }
+  .btn-confirm.btn--success {
+    /* 成功時：恢復伸展能力 */
+    flex: 1 1 0;
+    width: auto;
+  }
+  /* --- ▲▲▲ 【✅ 最終修正】彈窗頁腳行動版佈局 --- */
   
   #toastContainer {
     top: 1rem;
