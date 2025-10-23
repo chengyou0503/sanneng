@@ -72,9 +72,25 @@ textarea { resize: vertical; min-height: 70px; }
 .info-message { font-size: 1rem; color: var(--text-secondary); padding: 2rem; text-align: center; width: 100%; flex-shrink: 0; }
 
 /* --- 6. 覆蓋層與彈出視窗 --- */
-#loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--background-color); z-index: 200; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease-out; opacity: 1; }
+/* 【✅ 修正 1/2】載入畫面排版 */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background-color);
+  z-index: 200;
+  display: flex;
+  flex-direction: column; /* 將排列方式改為垂直 */
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease-out;
+  opacity: 1;
+}
 #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
 .logo-loader { max-width: 250px; animation: pop-in 1s ease-out forwards, pulse 2.5s ease-in-out infinite 1s; }
+
 .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); animation: fadeIn 0.3s ease; }
 .modal.active { display: flex; justify-content: center; align-items: center; }
 .modal-content { background-color: var(--card-background); margin: auto; padding: var(--gap); width: 90%; max-width: 600px; border-radius: var(--radius); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
@@ -244,36 +260,27 @@ textarea { resize: vertical; min-height: 70px; }
   .item-option { width: 180px; }
   .modal-content { width: 95%; margin: auto; }
   
-  /* --- ▼▼▼ 【✅ Grid 終極修正】 --- */
+  /* --- 【✅ 修正 2/2】彈窗頁腳 Grid 終極修正 --- */
   .modal-footer {
     display: grid;
-    /* 關鍵：定義一個兩欄的網格，每欄佔據 1fr (一份可用空間)，中間間隔 0.75rem */
+    /* 定義兩欄等寬網格，中間間隔 0.75rem */
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
 
   .modal-footer button {
-    /* 讓按鈕寬度 100% 填滿其所在的網格欄位 */
+    /* 讓按鈕寬度 100% 填滿其網格欄位 */
     width: 100%;
     padding: 0.75rem 0.5rem;
   }
   
-  /* 針對 .btn-confirm，在 RWD 模式下，它的寬度也必須是 100% */
-  .btn-confirm {
+  /* 覆蓋桌面版的固定寬度，確保在手機上正常顯示 */
+  .btn-confirm,
+  .btn-confirm.btn--loading,
+  .btn-confirm.btn--success {
     width: 100%;
     height: 52px;
   }
-
-  /* 處理動畫狀態 */
-  .btn-confirm.btn--loading {
-    /* 載入中，讓它佔據整個欄位寬度，但內容置中顯示 spinner */
-    width: 100%;
-  }
-  .btn-confirm.btn--success {
-    /* 成功時，同樣佔據整個欄位寬度 */
-    width: 100%;
-  }
-  /* --- ▲▲▲ 【✅ Grid 終極修正】 --- */
   
   #toastContainer {
     top: 1rem;
