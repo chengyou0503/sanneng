@@ -259,37 +259,37 @@ textarea { resize: vertical; min-height: 70px; }
   .item-option { width: 180px; }
   .modal-content { width: 95%; margin: auto; }
   
-  /* --- ▼▼▼ 【✅ 內部文字對齊終極修正】 --- */
+  /* --- ▼▼▼ 【終極修正】 --- */
+  /* 1. 設定 Grid 外部佈局 */
   .modal-footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
 
+  /* 2. 統一所有按鈕的內部對齊方式 */
   .modal-footer button {
-    /* 移除桌面版的 padding */
-    padding: 0;
-    /* 設定統一高度 */
-    height: 52px;
-    /* 強制使用 Flexbox 進行內部置中 */
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 52px;
+    padding: 0 0.5rem; /* 移除上下 padding */
     width: 100%;
   }
   
-  /* 覆蓋桌面版的固定寬度 */
-  .btn-confirm {
-    width: 100%;
-  }
-
-  /* 處理動畫狀態時，確保高度一致 */
+  /* 3. 覆蓋桌面版的固定寬度 */
+  .btn-confirm,
   .btn-confirm.btn--loading,
   .btn-confirm.btn--success {
     width: 100%;
-    height: 52px;
   }
-  /* --- ▲▲▲ 【✅ 內部文字對齊終極修正】 --- */
+
+  /* 4. 鎖定跑版的文字，強制其正常顯示 */
+  .btn-confirm .btn-text {
+    position: static;   /* 取消絕對定位 */
+    transform: none;    /* 移除 transform 位移 */
+  }
+  /* --- ▲▲▲ 【終極修正】 --- */
   
   #toastContainer {
     top: 1rem;
