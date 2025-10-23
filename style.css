@@ -1,7 +1,7 @@
 /* --- 1. 核心設計系統 --- */
 :root {
-  --primary-color: #2a64a7; /* Updated Blue */
-  --primary-hover: #204d82; /* Updated Darker Blue */
+  --primary-color: #2a64a7;
+  --primary-hover: #204d82;
   --background-color: #f8f9fa;
   --card-background: #ffffff;
   --text-primary: #1e293b;
@@ -97,7 +97,7 @@ textarea { resize: vertical; min-height: 70px; }
 .btn-cancel { background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
 .btn-cancel:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
 
-/* --- 6.1. 【✅ 已修正】按鈕動畫 (優化版) --- */
+/* --- 6.1. 按鈕動畫 (優化版) --- */
 .btn-confirm {
     position: relative;
     width: 130px;
@@ -243,11 +243,23 @@ textarea { resize: vertical; min-height: 70px; }
   .order-card h2, .login-card h2 { font-size: 1.5rem; }
   .item-option { width: 180px; }
   .modal-content { width: 95%; margin: auto; }
-  .modal-footer { flex-direction: column-reverse; }
-  .modal-footer button { width: 100%; }
-  .btn-confirm { width: 100%; height: 52px; }
-  .btn-confirm.btn--loading { width: 52px; }
-  .btn-confirm.btn--success { width: 100%; }
+  
+  /* --- ▼▼▼ 【✅ 已修改】彈窗頁腳行動版佈局 --- */
+  .modal-footer {
+    /* 維持 row 方向，讓按鈕並排 */
+    flex-direction: row; 
+  }
+  .modal-footer button {
+    /* 讓兩個按鈕平分寬度 */
+    flex: 1; 
+    /* 移除固定的 width，改由 flex 控制 */
+  }
+  /* --- ▲▲▲ 【✅ 已修改】彈窗頁腳行動版佈局 --- */
+
+  .btn-confirm { width: auto; height: 52px; } /* 讓寬度自適應 */
+  .btn-confirm.btn--loading { width: 52px; flex: 0 0 52px; } /* 載入時固定為圓形寬度 */
+  .btn-confirm.btn--success { width: auto; } /* 成功時寬度自適應 */
+  
   #toastContainer {
     top: 1rem;
     left: 1rem;
