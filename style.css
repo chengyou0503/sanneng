@@ -72,7 +72,6 @@ textarea { resize: vertical; min-height: 70px; }
 .info-message { font-size: 1rem; color: var(--text-secondary); padding: 2rem; text-align: center; width: 100%; flex-shrink: 0; }
 
 /* --- 6. 覆蓋層與彈出視窗 --- */
-/* 【✅ 修正 1/2】載入畫面排版 */
 #loadingOverlay {
   position: fixed;
   top: 0;
@@ -82,7 +81,7 @@ textarea { resize: vertical; min-height: 70px; }
   background-color: var(--background-color);
   z-index: 200;
   display: flex;
-  flex-direction: column; /* 將排列方式改為垂直 */
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: opacity 0.5s ease-out;
@@ -260,27 +259,37 @@ textarea { resize: vertical; min-height: 70px; }
   .item-option { width: 180px; }
   .modal-content { width: 95%; margin: auto; }
   
-  /* --- 【✅ 修正 2/2】彈窗頁腳 Grid 終極修正 --- */
+  /* --- ▼▼▼ 【✅ 內部文字對齊終極修正】 --- */
   .modal-footer {
     display: grid;
-    /* 定義兩欄等寬網格，中間間隔 0.75rem */
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
   }
 
   .modal-footer button {
-    /* 讓按鈕寬度 100% 填滿其網格欄位 */
+    /* 移除桌面版的 padding */
+    padding: 0;
+    /* 設定統一高度 */
+    height: 52px;
+    /* 強制使用 Flexbox 進行內部置中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
-    padding: 0.75rem 0.5rem;
   }
   
-  /* 覆蓋桌面版的固定寬度，確保在手機上正常顯示 */
-  .btn-confirm,
+  /* 覆蓋桌面版的固定寬度 */
+  .btn-confirm {
+    width: 100%;
+  }
+
+  /* 處理動畫狀態時，確保高度一致 */
   .btn-confirm.btn--loading,
   .btn-confirm.btn--success {
     width: 100%;
     height: 52px;
   }
+  /* --- ▲▲▲ 【✅ 內部文字對齊終極修正】 --- */
   
   #toastContainer {
     top: 1rem;
